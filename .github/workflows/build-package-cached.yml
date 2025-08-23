@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-13, windows-2025]
+        os: [ubuntu-24.04, macos-13, macos-14, windows-2025]
 
     permissions:
       contents: read
@@ -287,3 +287,4 @@ jobs:
             --notes "$NOTES" \
             --latest \
             final_releases/*
+
