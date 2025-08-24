@@ -95,26 +95,40 @@ jobs:
           mkdir -p packages
 
           # --- Build and Package x86_64 ---
+          # Set a unique volume name to prevent mount collisions. CPack will still generate a versioned DMG filename.
           cmake --preset ninja-multi-vcpkg -DCPACK_DMG_VOLUME_NAME="SlightlyPrettyChat-x64"
           cmake --build --preset ninja-vcpkg-release
           cmake --build --preset ninja-vcpkg-release --target package
-          mv build/*.dmg packages/package_x64.dmg
+          X64_DMG_PATH=$(find build -name "*.dmg")
+          mv "${X64_DMG_PATH}" packages/
           rm -rf build
 
           # --- Build and Package arm64 ---
-          cmake --preset ninja-multi-vcpkg -DCPACK_DMG_VOLUME_NAME="SlightlyPrettyChat-arm64" -DVCPKG_TARGET_TRIPLET=arm64-osx -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_SYSTEM_NAME=Darwin
+          # Set another unique volume name.
+          cmake --preset ninja-multi-vcpkg -DCPACK_DMG_VOLUME_NAME="SlightlyPrettyChat-arm64" -DVCPKG_TARGET_TRIPLET=arm64-osx -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_OSX_ARCHITECTURES=arm64
           cmake --build --preset ninja-vcpkg-release
           cmake --build --preset ninja-vcpkg-release --target package
-          mv build/*.dmg packages/package_arm64.dmg
+          ARM64_DMG_PATH=$(find build -name "*.dmg")
+          mv "${ARM64_DMG_PATH}" packages/
           rm -rf build
 
-          # --- Combine into Universal DMG ---
+          # --- Combine into a final, versioned Universal DMG ---
           APP_NAME="client_app.app"
           EXEC_NAME="client_app"
-          X64_DMG="packages/package_x64.dmg"
-          ARM64_DMG="packages/package_arm64.dmg"
-          X64_MOUNT=$(hdiutil attach -nobrowse "${X64_DMG}" | grep /Volumes | awk '{print $3}')
-          ARM64_MOUNT=$(hdiutil attach -nobrowse "${ARM64_DMG}" | grep /Volumes | awk '{print $3}')
+          
+          # Use the full, versioned paths we preserved
+          X64_DMG="packages/$(basename "${X64_DMG_PATH}")"
+          ARM64_DMG="packages/$(basename "${ARM64_DMG_PATH}")"
+
+          # Extract the version from the filename to create a clean, final name
+          VERSION=$(basename "${X64_DMG_PATH}" | sed -n 's/.*-\([0-9.]*\)-.*/\1/p')
+          FINAL_DMG_NAME="SlightlyPrettyChat-${VERSION}-Universal-macOS.dmg"
+          FINAL_VOL_NAME="SlightlyPrettyChat"
+
+          # Mount the two DMGs; this is now safe because their internal volume names are unique
+          X64_MOUNT=$(hdiutil attach -nobrowse "${X64_DMG}" | grep /Volumes | awk '{$1=$2=""; print $0}' | sed 's/^[ \t]*//')
+          ARM64_MOUNT=$(hdiutil attach -nobrowse "${ARM64_DMG}" | grep /Volumes | awk '{$1=$2=""; print $0}' | sed 's/^[ \t]*//')
+
           mkdir -p staging
           cp -R "${ARM64_MOUNT}/${APP_NAME}" staging/
           X64_EXEC="${X64_MOUNT}/${APP_NAME}/Contents/MacOS/${EXEC_NAME}"
@@ -124,7 +138,8 @@ jobs:
           hdiutil detach "${ARM64_MOUNT}"
           
           mkdir build
-          create-dmg --overwrite "staging/${APP_NAME}" "build/"
+          # Create the final DMG with a proper, versioned filename and volume name
+          create-dmg --volname "${FINAL_VOL_NAME}" "staging/${APP_NAME}" --dmg-name "${FINAL_DMG_NAME}" "build/"
 
       - name: Create AppImage on Linux
         if: runner.os == 'Linux'
@@ -322,6 +337,7 @@ jobs:
             --notes "$NOTES" \
             --latest \
             final_releases/*
+
 
 
 
