@@ -79,17 +79,70 @@ jobs:
         run: |
           echo "VCPKG_BINARY_SOURCES=clear;nuget,https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json,readwrite" >> $GITHUB_ENV
           
-      - name: Configure CMake
+      - name: Configure, Build, and Package (Standard Platforms)
+        if: matrix.os != 'macos-13'
         run: |
           cmake --preset ninja-multi-vcpkg
-
-      - name: Build (Release configuration)
-        run: |
           cmake --build --preset ninja-vcpkg-release
-
-      - name: Package (Release configuration)
-        run: |
           cmake --build --preset ninja-vcpkg-release --target package
+
+      - name: Configure, Build, and Package (macOS Universal)
+        if: matrix.os == 'macos-13'
+        shell: bash
+        run: |
+          set -ex
+          brew install create-dmg
+          mkdir -p packages
+
+          # --- Build and Package x86_64 ---
+          # Set a unique volume name to prevent mount collisions.
+          cmake --preset ninja-multi-vcpkg -DCPACK_DMG_VOLUME_NAME="x64-Volume"
+          cmake --build --preset ninja-vcpkg-release
+          cmake --build --preset ninja-vcpkg-release --target package
+
+          # Find the original DMG and add a suffix to its filename to make it unique.
+          ORIGINAL_DMG_PATH_X64=$(find build -maxdepth 1 -name "*.dmg")
+          BASENAME_X64=$(basename "${ORIGINAL_DMG_PATH_X64}" .dmg)
+          RENAMED_DMG_PATH_X64="packages/${BASENAME_X64}-x64.dmg"
+          mv "${ORIGINAL_DMG_PATH_X64}" "${RENAMED_DMG_PATH_X64}"
+          rm -rf build
+
+          # --- Build and Package arm64 ---
+          # Set another unique volume name.
+          cmake --preset ninja-multi-vcpkg -DCPACK_DMG_VOLUME_NAME="arm64-Volume" -DVCPKG_TARGET_TRIPLET=arm64-osx -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake --build --preset ninja-vcpkg-release
+          cmake --build --preset ninja-vcpkg-release --target package
+
+          # Find the original DMG and add a suffix to its filename.
+          ORIGINAL_DMG_PATH_ARM64=$(find build -maxdepth 1 -name "*.dmg")
+          BASENAME_ARM64=$(basename "${ORIGINAL_DMG_PATH_ARM64}" .dmg)
+          RENAMED_DMG_PATH_ARM64="packages/${BASENAME_ARM64}-arm64.dmg"
+          mv "${ORIGINAL_DMG_PATH_ARM64}" "${RENAMED_DMG_PATH_ARM64}"
+          rm -rf build
+
+          # --- Combine into a final, versioned Universal DMG ---
+          APP_NAME="client_app.app"
+          EXEC_NAME="client_app"
+          
+          # Use the original basename to construct the final DMG name
+          FINAL_DMG_NAME="${BASENAME_X64}-Universal.dmg"
+          
+          X64_DMG="${RENAMED_DMG_PATH_X64}"
+          ARM64_DMG="${RENAMED_DMG_PATH_ARM64}"
+
+          X64_MOUNT=$(hdiutil attach -nobrowse "${X64_DMG}" | grep /Volumes | awk '{$1=$2=""; print $0}' | sed 's/^[ \t]*//')
+          ARM64_MOUNT=$(hdiutil attach -nobrowse "${ARM64_DMG}" | grep /Volumes | awk '{$1=$2=""; print $0}' | sed 's/^[ \t]*//')
+
+          mkdir -p staging
+          cp -R "${ARM64_MOUNT}/${APP_NAME}" staging/
+          X64_EXEC="${X64_MOUNT}/${APP_NAME}/Contents/MacOS/${EXEC_NAME}"
+          ARM64_EXEC_STAGED="staging/${APP_NAME}/Contents/MacOS/${EXEC_NAME}"
+          lipo -create -output "${ARM64_EXEC_STAGED}" "${X64_EXEC}" "${ARM64_EXEC_STAGED}"
+          hdiutil detach "${X64_MOUNT}"
+          hdiutil detach "${ARM64_MOUNT}"
+          
+          mkdir build
+          create-dmg --volname "SlightlyPrettyChat" "build/${FINAL_DMG_NAME}" "staging/" 
 
       - name: Create AppImage on Linux
         if: runner.os == 'Linux'
