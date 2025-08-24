@@ -102,7 +102,7 @@ jobs:
           rm -rf build
 
           # --- Build and Package arm64 ---
-          cmake --preset ninja-multi-vcpkg -DVCPKG_TARGET_TRIPLET=arm64-osx -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_CROSSCOMPILING=TRUE
+          cmake --preset ninja-multi-vcpkg -DVCPKG_TARGET_TRIPLET=arm64-osx -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_CROSSCOMPILING=TRUE
           cmake --build --preset ninja-vcpkg-release
           cmake --build --preset ninja-vcpkg-release --target package
           mv build/*.dmg packages/package_arm64.dmg
@@ -322,6 +322,7 @@ jobs:
             --notes "$NOTES" \
             --latest \
             final_releases/*
+
 
 
 
