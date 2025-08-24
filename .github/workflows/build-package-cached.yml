@@ -340,16 +340,3 @@ jobs:
             --notes "$NOTES" \
             --latest \
             final_releases/*
-
-
-
-
-
-
-
-
-
-
-
-
-
