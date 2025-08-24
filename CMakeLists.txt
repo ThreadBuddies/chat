@@ -90,9 +90,16 @@ endif()
 # This tells CPack to put all installed files into a root folder inside the archive.
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
 
+message(STATUS "--- DIAGNOSTIC OUTPUT ---")
 message(STATUS "Platform: WIN32=${WIN32}, APPLE=${APPLE}, LINUX=${LINUX}")
 message(STATUS "Final CPACK_COMPONENTS_ALL: ${CPACK_COMPONENTS_ALL}")
 message(STATUS "CPACK_GENERATOR: ${CPACK_GENERATOR}")
+message(STATUS "CMAKE_SYSTEM_NAME='${CMAKE_SYSTEM_NAME}'")
+message(STATUS "CMAKE_OSX_ARCHITECTURES='${CMAKE_OSX_ARCHITECTURES}'")
+message(STATUS "CMAKE_CROSSCOMPILING='${CMAKE_CROSSCOMPILING}'")
+message(STATUS "CMAKE_CXX_COMPILER='${CMAKE_CXX_COMPILER}'")
+message(STATUS "CMAKE_CXX_FLAGS='${CMAKE_CXX_FLAGS}'")
+message(STATUS "--- END DIAGNOSTIC ---")
 
 # Include the CPack module AFTER all CPACK_* variables are set.
 # This automatically creates the 'package' build target.
