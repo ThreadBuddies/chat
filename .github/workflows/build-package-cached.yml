@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-13, macos-14, windows-2025]
+        os: [ubuntu-24.04, macos-13, windows-2025]
 
     permissions:
       contents: read
@@ -48,22 +48,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mono-complete doxygen graphviz clang bison flex autoconf libltdl-dev python3-jinja2 libx11-dev libxft-dev libxext-dev libxi-dev libxtst-dev libxrandr-dev
 
-      - name: Install build dependencies (MacOS 14)
-        if: matrix.os == 'macos-14'
-        run: brew install autoconf automake libtool pkg-config
-
       - name: Configure NuGet credentials using vcpkg's nuget.exe
         shell: bash
         run: |
           # Get the path to vcpkg's managed nuget.exe. tr -d '\r' is for Windows compatibility.
           NUGET_EXE_PATH=$(./vcpkg/vcpkg fetch nuget | tail -n 1 | tr -d '\r')
-
           # Determine the command prefix (mono for non-windows)
           CMD_PREFIX=""
           if [[ "${{ runner.os }}" != "Windows" ]]; then
             CMD_PREFIX="mono"
           fi
-
           echo "Configuring NuGet source..."
           # Add the source with credentials, as per the documentation
           $CMD_PREFIX "$NUGET_EXE_PATH" sources add \
@@ -72,7 +66,6 @@ jobs:
             -UserName "GITHUB_TOKEN" \
             -Password "${{ secrets.GITHUB_TOKEN }}" \
             -StorePasswordInClearText
-
           echo "Setting API key..."
           # Set the API key for the source to ensure push access
           $CMD_PREFIX "$NUGET_EXE_PATH" setapikey "${{ secrets.GITHUB_TOKEN }}" \
@@ -83,24 +76,51 @@ jobs:
         run: |
           echo "VCPKG_BINARY_SOURCES=clear;nuget,https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json,readwrite" >> $GITHUB_ENV
           
-      - name: Configure CMake
+      - name: Configure, Build, and Package (Standard Platforms)
+        if: matrix.os != 'macos-13'
         run: |
           cmake --preset ninja-multi-vcpkg
-
-      - name: Build (Release configuration)
-        run: |
           cmake --build --preset ninja-vcpkg-release
-
-      - name: Package (Release configuration)
-        run: |
           cmake --build --preset ninja-vcpkg-release --target package
+
+      - name: Configure, Build, and Package (macOS Universal)
+        if: matrix.os == 'macos-13'
+        shell: bash
+        run: |
+          set -ex
+          brew install create-dmg
+
+          # Build and Package x86_64
+          cmake --preset ninja-multi-vcpkg -B build_x64 -DVCPKG_TARGET_TRIPLET=x64-osx
+          cmake --build build_x64 --preset ninja-vcpkg-release
+          cmake --build build_x64 --preset ninja-vcpkg-release --target package
+
+          # Build and Package arm64
+          cmake --preset ninja-multi-vcpkg -B build_arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake --build build_arm64 --preset ninja-vcpkg-release
+          cmake --build build_arm64 --preset ninja-vcpkg-release --target package
+
+          # Combine into Universal DMG
+          APP_NAME="YourAppName.app"
+          EXEC_NAME="YourAppName"
+          X64_DMG=$(find build_x64 -name "*.dmg")
+          ARM64_DMG=$(find build_arm64 -name "*.dmg")
+          X64_MOUNT=$(hdiutil attach -nobrowse "${X64_DMG}" | grep /Volumes | awk '{print $3}')
+          ARM64_MOUNT=$(hdiutil attach -nobrowse "${ARM64_DMG}" | grep /Volumes | awk '{print $3}')
+          mkdir -p staging
+          cp -R "${ARM64_MOUNT}/${APP_NAME}" staging/
+          X64_EXEC="${X64_MOUNT}/${APP_NAME}/Contents/MacOS/${EXEC_NAME}"
+          ARM64_EXEC_STAGED="staging/${APP_NAME}/Contents/MacOS/${EXEC_NAME}"
+          lipo -create -output "${ARM64_EXEC_STAGED}" "${X64_EXEC}" "${ARM64_EXEC_STAGED}"
+          hdiutil detach "${X64_MOUNT}"
+          hdiutil detach "${ARM64_MOUNT}"
+          create-dmg --overwrite "staging/${APP_NAME}" "build/"
 
       - name: Create AppImage on Linux
         if: runner.os == 'Linux'
         run: |
           cd build
           cmake --install . --config Release --component client --prefix ./AppDir/usr/bin
-
           mkdir -p AppDir/usr/share/applications
           cat > AppDir/usr/share/applications/client_app.desktop << EOF
           [Desktop Entry]
@@ -110,13 +130,10 @@ jobs:
           Categories=Utility;
           Icon=appname
           EOF
-
           mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps
           touch AppDir/usr/share/icons/hicolor/scalable/apps/appname.svg
-
           wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           chmod +x linuxdeploy-x86_64.AppImage
-
           ./linuxdeploy-x86_64.AppImage --appimage-extract
           rm linuxdeploy-x86_64.AppImage
           ./squashfs-root/AppRun --appdir AppDir --output appimage
@@ -177,7 +194,6 @@ jobs:
         run: |
           REPO_LC=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')
           echo "repo_lc=${REPO_LC}" >> $GITHUB_OUTPUT
-
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             TAG="${{ github.ref_name }}"
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
@@ -284,12 +300,9 @@ jobs:
           Each platform archive below contains both the application and its signed attestation.
           You can verify the integrity and origin of these files using the official GitHub CLI or slsa-verifier.
           See: https://github.com/slsa-framework/slsa-verifier"
-
           # Upload the newly created final archives
           gh release create "$TAG" \
             --title "Release $TAG" \
             --notes "$NOTES" \
             --latest \
             final_releases/*
-
-
