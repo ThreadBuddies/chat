@@ -92,22 +92,27 @@ jobs:
         run: |
           set -ex
           brew install create-dmg
+          mkdir -p packages
 
-          # Build and Package x86_64
-          cmake --preset ninja-multi-vcpkg -B build_x64 -DVCPKG_TARGET_TRIPLET=x64-osx
-          cmake --build build_x64 --preset ninja-vcpkg-release
-          cmake --build build_x64 --preset ninja-vcpkg-release --target package
+          # --- Build and Package x86_64 ---
+          cmake --preset ninja-multi-vcpkg -DVCPKG_TARGET_TRIPLET=x64-osx
+          cmake --build --preset ninja-vcpkg-release
+          cmake --build --preset ninja-vcpkg-release --target package
+          mv build/*.dmg packages/package_x64.dmg
+          rm -rf build
 
-          # Build and Package arm64
-          cmake --preset ninja-multi-vcpkg -B build_arm64 -DVCPKG_TARGET_TRIPLET=arm64-osx -DCMAKE_OSX_ARCHITECTURES=arm64
-          cmake --build build_arm64 --preset ninja-vcpkg-release
-          cmake --build build_arm64 --preset ninja-vcpkg-release --target package
+          # --- Build and Package arm64 ---
+          cmake --preset ninja-multi-vcpkg -DVCPKG_TARGET_TRIPLET=arm64-osx -DCMAKE_OSX_ARCHITECTURES=arm64
+          cmake --build --preset ninja-vcpkg-release
+          cmake --build --preset ninja-vcpkg-release --target package
+          mv build/*.dmg packages/package_arm64.dmg
+          rm -rf build
 
-          # Combine into Universal DMG
+          # --- Combine into Universal DMG ---
           APP_NAME="client_app.app"
           EXEC_NAME="client_app"
-          X64_DMG=$(find build_x64 -name "*.dmg")
-          ARM64_DMG=$(find build_arm64 -name "*.dmg")
+          X64_DMG="packages/package_x64.dmg"
+          ARM64_DMG="packages/package_arm64.dmg"
           X64_MOUNT=$(hdiutil attach -nobrowse "${X64_DMG}" | grep /Volumes | awk '{print $3}')
           ARM64_MOUNT=$(hdiutil attach -nobrowse "${ARM64_DMG}" | grep /Volumes | awk '{print $3}')
           mkdir -p staging
@@ -117,6 +122,8 @@ jobs:
           lipo -create -output "${ARM64_EXEC_STAGED}" "${X64_EXEC}" "${ARM64_EXEC_STAGED}"
           hdiutil detach "${X64_MOUNT}"
           hdiutil detach "${ARM64_MOUNT}"
+          
+          mkdir build
           create-dmg --overwrite "staging/${APP_NAME}" "build/"
 
       - name: Create AppImage on Linux
@@ -315,3 +322,4 @@ jobs:
             --notes "$NOTES" \
             --latest \
             final_releases/*
+
