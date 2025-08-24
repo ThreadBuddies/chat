@@ -142,7 +142,7 @@ jobs:
           hdiutil detach "${ARM64_MOUNT}"
           
           mkdir build
-          create-dmg --volname "SlightlyPrettyChat" --dmg-name "${FINAL_DMG_NAME}" "staging/${APP_NAME}" "build/"
+          create-dmg --volname "SlightlyPrettyChat" "build/${FINAL_DMG_NAME}" "staging/" 
 
       - name: Create AppImage on Linux
         if: runner.os == 'Linux'
@@ -340,6 +340,7 @@ jobs:
             --notes "$NOTES" \
             --latest \
             final_releases/*
+
 
 
 
