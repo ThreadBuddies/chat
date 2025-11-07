@@ -13,16 +13,17 @@ jobs:
   build:
     name: ${{ matrix.os }}-${{ github.workflow }}
     runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, macos-13, windows-2025]
 
     permissions:
       contents: read
       packages: write
       id-token: write
       attestations: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-13, windows-2025]
 
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +47,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y mono-complete doxygen graphviz clang bison flex autoconf libltdl-dev python3-jinja2 libx11-dev libxft-dev libxext-dev libxi-dev libxtst-dev libxrandr-dev
+          sudo apt-get install -y mono-complete doxygen graphviz clang bison flex autoconf libltdl-dev libarchive-dev python3-jinja2 libx11-dev libxft-dev libxext-dev libxi-dev libxtst-dev libxrandr-dev libgtk-3-dev libglib2.0-dev libxcb-cursor0 file
 
       - name: Configure NuGet credentials using vcpkg's nuget.exe
         shell: bash
@@ -63,11 +64,11 @@ jobs:
           echo "Configuring NuGet source..."
           # Add the source with credentials, as per the documentation
           $CMD_PREFIX "$NUGET_EXE_PATH" sources add \
-            -Name "github" \
-            -Source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
-            -UserName "GITHUB_TOKEN" \
-            -Password "${{ secrets.GITHUB_TOKEN }}" \
-            -StorePasswordInClearText
+                  -Name "github-packages" \
+                  -Source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+                  -UserName ${{ github.actor }} \
+                  -Password ${{ secrets.GITHUB_TOKEN }} \
+                  -StorePasswordInClearText
 
           echo "Setting API key..."
           # Set the API key for the source to ensure push access
@@ -78,7 +79,19 @@ jobs:
         shell: bash
         run: |
           echo "VCPKG_BINARY_SOURCES=clear;nuget,https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json,readwrite" >> $GITHUB_ENV
-          
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.10.0'
+          arch: ${{ runner.os == 'Windows' && 'win64_msvc2022_64' || '' }}
+          modules: "qtgrpc qtwebsockets qtscxml"
+          cache: true
+
+      - name: Install required Python packages
+        if: runner.os == 'Linux'
+        run: python -m pip install jinja2
+
       - name: Configure CMake
         run: |
           cmake --preset ninja-multi-vcpkg
@@ -90,32 +103,6 @@ jobs:
       - name: Package (Release configuration)
         run: |
           cmake --build --preset ninja-vcpkg-release --target package
-
-      - name: Create AppImage on Linux
-        if: runner.os == 'Linux'
-        run: |
-          cd build
-          cmake --install . --config Release --component client --prefix ./AppDir/usr/bin
-
-          mkdir -p AppDir/usr/share/applications
-          cat > AppDir/usr/share/applications/client_app.desktop << EOF
-          [Desktop Entry]
-          Type=Application
-          Name=Slightly Pretty Chat
-          Exec=client_app
-          Categories=Utility;
-          Icon=appname
-          EOF
-
-          mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps
-          touch AppDir/usr/share/icons/hicolor/scalable/apps/appname.svg
-
-          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          chmod +x linuxdeploy-x86_64.AppImage
-
-          ./linuxdeploy-x86_64.AppImage --appimage-extract
-          rm linuxdeploy-x86_64.AppImage
-          ./squashfs-root/AppRun --appdir AppDir --output appimage
 
       - name: Generate SLSA Attestation for binaries
         if: github.ref_type == 'tag'
@@ -132,7 +119,7 @@ jobs:
         shell: bash
         run: |
           mkdir upload_dir
-          for f in build/*.dmg build/*.zip build/*.tar.gz build/*.AppImage; do
+          for f in build/*.dmg build/*.zip build/*.tar.gz; do
             if [ -f "$f" ]; then
               cp "$f" upload_dir/
             fi
@@ -287,3 +274,6 @@ jobs:
             --notes "$NOTES" \
             --latest \
             final_releases/*
+
+
+
