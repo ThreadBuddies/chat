@@ -13,16 +13,17 @@ jobs:
   build:
     name: ${{ matrix.os }}-${{ github.workflow }}
     runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, macos-13, windows-2025]
 
     permissions:
       contents: read
       packages: write
       id-token: write
       attestations: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-13, windows-2025]
 
     steps:
       - uses: actions/checkout@v4
@@ -63,11 +64,11 @@ jobs:
           echo "Configuring NuGet source..."
           # Add the source with credentials, as per the documentation
           $CMD_PREFIX "$NUGET_EXE_PATH" sources add \
-            -Name "github" \
-            -Source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
-            -UserName "GITHUB_TOKEN" \
-            -Password "${{ secrets.GITHUB_TOKEN }}" \
-            -StorePasswordInClearText
+                  -Name "github-packages" \
+                  -Source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+                  -UserName ${{ github.actor }} \
+                  -Password ${{ secrets.GITHUB_TOKEN }} \
+                  -StorePasswordInClearText
 
           echo "Setting API key..."
           # Set the API key for the source to ensure push access
@@ -273,5 +274,6 @@ jobs:
             --notes "$NOTES" \
             --latest \
             final_releases/*
+
 
 
