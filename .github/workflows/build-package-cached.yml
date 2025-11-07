@@ -65,7 +65,7 @@ jobs:
           $CMD_PREFIX "$NUGET_EXE_PATH" sources add \
             -Name "github" \
             -Source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
-            -UserName "github" \
+            -UserName "GITHUB_TOKEN" \
             -Password "${{ secrets.GITHUB_TOKEN }}" \
             -StorePasswordInClearText
 
@@ -273,4 +273,5 @@ jobs:
             --notes "$NOTES" \
             --latest \
             final_releases/*
+
 
