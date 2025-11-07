@@ -1,1 +1,1 @@
-FROM ghcr.io/ThreadBuddies/chat/devcontainer:latest
+FROM ghcr.io/threadbuddies/chat/devcontainer:latest
