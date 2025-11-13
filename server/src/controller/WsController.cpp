@@ -13,7 +13,7 @@ WsController::WsController() {
     LOG_INFO << "Constructing WsController service chain...";
 
     auto dbClient = drogon::app().getDbClient();
-    if (!dbClient) {
+    if(!dbClient) {
         LOG_FATAL << "Database client is not available! Aborting.";
         drogon::app().quit();
         return;
@@ -30,7 +30,7 @@ WsController::~WsController() = default;
 
 void WsController::handleNewConnection([[maybe_unused]] const drogon::HttpRequestPtr& req, const drogon::WebSocketConnectionPtr& conn) {
     LOG_TRACE << "WS connect: " << conn->peerAddr().toIpPort();
-    conn->setContext(std::make_shared<WsDataGuarded>());
+    conn->setContext(WsDataGuarded::create());
     chat::Envelope helloEnv;
     helloEnv.mutable_server_hello()->set_type(chat::ServerType::TYPE_SERVER);
     helloEnv.mutable_server_hello()->set_protocol_version(common::version::PROTOCOL_VERSION);
@@ -51,6 +51,8 @@ void WsController::handleConnectionClosed(const drogon::WebSocketConnectionPtr& 
     drogon::async_run([conn]() -> drogon::Task<> {
         auto wsDataProxy = co_await conn->getContext<WsDataGuarded>()->lock_shared();
         co_await ChatRoomManager::instance().unregisterConnection(conn, *wsDataProxy);
+        // https://github.com/drogonframework/drogon/blob/afd0930530b8ec116f18bc5044b9920fcf0f5422/examples/redis/controllers/WsClient.cc#L141
+        conn->clearContext();
     });
 }
 

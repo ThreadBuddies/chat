@@ -1,7 +1,6 @@
 #pragma once
 
-#include <common/utils/guarded.h>
-
+#include <common/utils/AwaitableGuarded.h>
 /**
  * @file WsData.h
  * @brief Defines the stateful data structures associated with a WebSocket connection.
@@ -51,7 +50,7 @@ struct CurrentRoom {
  * @brief A container for all state information associated with a single WebSocket connection.
  *
  * @details This structure is the primary state object for a client session. An
- * instance of this struct (wrapped in a `common::Guarded` object for thread
+ * instance of this struct (wrapped in a `common::AwaitableGuarded` object for thread
  * safety) is attached to each `drogon::WebSocketConnection`'s context. It tracks
  * everything from the user's authentication status to their current room membership.
  */
@@ -65,7 +64,7 @@ struct WsData {
 };
 
 /// @brief A type alias for `WsData` protected by a `common::Guarded` wrapper for thread-safe access.
-using WsDataGuarded = common::Guarded<WsData>;
+using WsDataGuarded = common::AwaitableGuarded<WsData>;
 /// @brief A type alias for a shared pointer to a `WsDataGuarded` object, as stored in the connection context.
 using WsDataPtr = std::shared_ptr<WsDataGuarded>;
 
