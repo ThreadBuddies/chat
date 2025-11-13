@@ -177,7 +177,7 @@ jobs:
         with:
           context: docker_contexts/server
           file: ./Dockerfile.server
-          push: true
+          push: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
           tags: ghcr.io/${{ steps.docker_meta.outputs.repo_lc }}-server:${{ steps.docker_meta.outputs.tag }}
 
       - name: Attest Server Docker image
@@ -195,7 +195,7 @@ jobs:
         with:
           context: docker_contexts/aggregator
           file: ./Dockerfile.aggregator
-          push: true
+          push: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
           tags: ghcr.io/${{ steps.docker_meta.outputs.repo_lc }}-aggregator:${{ steps.docker_meta.outputs.tag }}
 
       - name: Attest Aggregator Docker image
@@ -274,6 +274,7 @@ jobs:
             --notes "$NOTES" \
             --latest \
             final_releases/*
+
 
 
 
