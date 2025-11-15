@@ -1,6 +1,6 @@
 # Чат-приложение
 
-[Doxygen](https://ya-masterskaya-cpp.github.io/q2_2025_chat_project_team_3/index.html)
+[Doxygen](https://threadbuddies.github.io/chat/index.html)
 
 ## Быстрый старт
 
@@ -75,7 +75,3 @@
 - **Protocol Buffers**
 
 ---
-
-## Дополнительно
-
-_Если у вас есть вопросы по формату сообщений или процессу разработки, обращайтесь к PR [#1](https://github.com/ya-masterskaya-cpp/q2_2025_chat_project_team_3/pull/1) и комментариям к нему._
