@@ -12,11 +12,11 @@ namespace server {
  */
 struct fire_and_forget_task {
     struct promise_type {
-        fire_and_forget_task get_return_object() noexcept { return {}; }
-        std::suspend_never initial_suspend() noexcept { return {}; }
-        std::suspend_never final_suspend() noexcept { return {}; }
-        void return_void() noexcept {}
-        void unhandled_exception() noexcept {
+        static fire_and_forget_task get_return_object() noexcept { return {}; }
+        static std::suspend_never initial_suspend() noexcept { return {}; }
+        static std::suspend_never final_suspend() noexcept { return {}; }
+        static void return_void() noexcept {}
+        static void unhandled_exception() noexcept {
             // A production application should consider logging this event,
             // as an unhandled exception in a fire-and-forget task
             // can be difficult to debug.
@@ -45,7 +45,7 @@ public:
      * @brief Constructs the wrapper, taking ownership of the inner awaiter.
      */
     explicit resume_on_io_loop(AwaiterType&& awaiter) noexcept
-        : inner_awaiter_(std::move(awaiter)) {}
+        : m_inner_awaiter(std::move(awaiter)) {}
 
     /**
      * @brief The co_await entry point for this wrapper.
@@ -63,17 +63,17 @@ public:
             using ResultType = std::decay_t<decltype(std::declval<AwaiterType&>().await_resume())>;
 
             /// The wrapped awaiter object, moved here for its lifetime management.
-            AwaiterType inner_awaiter_;
+            AwaiterType m_inner_awaiter;
             /// The index of the IO thread where the coroutine was suspended.
-            size_t original_thread_index_;
+            size_t m_original_thread_index;
 
             /// A variant to hold the outcome of the operation.
             /// `std::monostate` is the required initial state before completion.
             std::conditional_t<
                 std::is_void_v<ResultType>,
                 std::variant<std::monostate, std::exception_ptr>,
-                std::variant<std::monostate, ResultType, std::exception_ptr>
-            > result_;
+                std::variant<std::monostate, std::exception_ptr, ResultType>
+            > m_result;
 
             /**
              * @brief Always returns false to force suspension for the thread switch.
@@ -88,11 +88,15 @@ public:
              * @throws The exception from the operation if it failed.
              */
             ResultType await_resume() {
-                if (std::holds_alternative<std::exception_ptr>(result_)) {
-                    std::rethrow_exception(std::get<std::exception_ptr>(result_));
+                if(std::holds_alternative<std::exception_ptr>(m_result)) {
+                    std::rethrow_exception(std::get<std::exception_ptr>(m_result));
                 }
-                if constexpr (!std::is_void_v<ResultType>) {
-                    return std::get<ResultType>(std::move(result_));
+                if constexpr(!std::is_void_v<ResultType>) {
+                    if(std::holds_alternative<ResultType>(m_result)) {
+                        return std::get<ResultType>(std::move(m_result));
+                    } else {
+                        throw std::runtime_error("await_resume: neither exception nor value is in m_result");
+                    }
                 }
             }
 
@@ -101,43 +105,44 @@ public:
              */
             void await_suspend(std::coroutine_handle<> handle) {
                 // On the original IO thread: capture the current context.
-                original_thread_index_ = drogon::app().getCurrentThreadIndex();
-                if (original_thread_index_ >= drogon::app().getThreadNum()) {
-                    original_thread_index_ = 0; // Fallback to the first IO thread.
+                m_original_thread_index = drogon::app().getCurrentThreadIndex();
+                if(m_original_thread_index >= drogon::app().getThreadNum()) {
+                    m_original_thread_index = 0; // Fallback to the first IO thread.
                 }
-                
+
                 // Launch a fire-and-forget lambda-coroutine to perform the actual work.
-                // It is safe to capture `this` because the `awaiter` object lives
-                // in the frame of the suspended `handle`, whose lifetime is
-                // guaranteed by the Drogon framework.
-                [](awaiter* self, std::coroutine_handle<> h) -> fire_and_forget_task {
+                // It is safe to pass `this` because the `awaiter` object lives
+                // in the frame of the suspended `handle`.
+                // even tho this is captureless lambda and simply calling it as-is **should** be fine
+                // lets get it's pointer with + to avoid any notion of potential ub
+                auto lambda = +[](awaiter* self, std::coroutine_handle<> handle) -> fire_and_forget_task {
                     try {
                         // This co_await runs and completes on the background (e.g., DB) thread.
-                        if constexpr (std::is_void_v<ResultType>) {
-                            co_await self->inner_awaiter_;
+                        if constexpr(std::is_void_v<ResultType>) {
+                            co_await self->m_inner_awaiter;
                         } else {
-                            // On success, store the result. Use std::move to be optimal;
-                            // it will move if possible and copy if not (e.g., from a const ref).
-                            self->result_.template emplace<ResultType>(std::move(co_await self->inner_awaiter_));
+                            self->m_result.template emplace<ResultType>(std::move(co_await self->m_inner_awaiter));
                         }
-                    } catch (...) {
+                    } catch(...) {
                         // On failure, store the exception.
-                        self->result_.template emplace<std::exception_ptr>(std::current_exception());
+                        self->m_result.template emplace<std::exception_ptr>(std::current_exception());
                     }
-                    
+
                     // From the background thread, post the resumption back to the original IO thread.
-                    drogon::app().getIOLoop(self->original_thread_index_)->queueInLoop([h]() {
-                        h.resume();
+                    drogon::app().getIOLoop(self->m_original_thread_index)->queueInLoop([handle]() {
+                        handle.resume();
                     });
-                }(this, handle);
+                };
+
+                lambda(this, handle);
             }
         };
 
-        return awaiter{std::move(inner_awaiter_), 0, {}};
+        return awaiter{std::move(m_inner_awaiter), 0, {}};
     }
 
 private:
-    AwaiterType inner_awaiter_;
+    AwaiterType m_inner_awaiter;
 };
 
 /**

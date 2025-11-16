@@ -124,7 +124,7 @@ public:
     drogon::Task<void> updateUserRoomRights(int32_t userId, int32_t roomId, chat::UserRights newRights, WsData& locked_data);
     
 private:
-    ChatRoomManager() = default;
+    ChatRoomManager() : m_manager_mutex{common::AwaitableGuarded<int>::create(0)} {}
     ChatRoomManager(const ChatRoomManager&) = delete;
     ChatRoomManager& operator=(const ChatRoomManager&) = delete;
 
@@ -141,7 +141,7 @@ private:
     void sendToAll_unsafe(const chat::Envelope& message) const;
 
     /// @brief An asynchronous mutex protecting all internal data structures.
-    mutable common::Guarded<int> m_manager_mutex{0};
+    mutable std::shared_ptr<common::AwaitableGuarded<int>> m_manager_mutex;
 
     /// @brief Maps a user's ID to the set of their active WebSocket connections.
     std::unordered_map<int32_t, std::unordered_set<drogon::WebSocketConnectionPtr>> m_user_id_to_conns;
