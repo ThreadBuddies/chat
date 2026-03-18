@@ -1,7 +1,7 @@
 #include <client/authPanel.h>
 #include <client/mainWidget.h>
 #include <client/wsClient.h>
-#include <client/passwordUtil.h>
+#include <common/utils/passwordUtil.h>
 #include <client/textUtil.h>
 #include <common/utils/limits.h>
 #include <optional>
@@ -100,8 +100,8 @@ void AuthPanel::OnInputLogin(wxCommandEvent& event) {
 
 void AuthPanel::HandleRegisterContinue() {
     try {
-        std::string salt = password::generate_salt();
-        std::string hash = password::hash_password(m_password.utf8_string(), salt);
+        std::string salt = common::password::generate_salt();
+        std::string hash = common::password::hash_password(m_password.utf8_string(), salt);
         mainWin->wsClient->completeRegister(hash, salt);
     } catch (const std::exception& ex) {
         mainWin->ShowPopup(ex.what(), wxICON_ERROR);
@@ -112,11 +112,11 @@ void AuthPanel::HandleRegisterContinue() {
 void AuthPanel::HandleAuthContinue(const std::string &salt) {
     try {
         if (salt.empty()) {
-            std::string new_salt = password::generate_salt();
-            std::string hash = password::hash_password(m_password.utf8_string(), new_salt);
+            std::string new_salt = common::password::generate_salt();
+            std::string hash = common::password::hash_password(m_password.utf8_string(), new_salt);
             mainWin->wsClient->completeAuth(hash, m_password.utf8_string(), new_salt);
         } else {
-            std::string hash = password::hash_password(m_password.utf8_string(), salt);
+            std::string hash = common::password::hash_password(m_password.utf8_string(), salt);
             mainWin->wsClient->completeAuth(hash, std::nullopt, std::nullopt);
         }
     } catch (const std::exception& ex) {
