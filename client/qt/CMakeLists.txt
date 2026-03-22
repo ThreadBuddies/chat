@@ -3,11 +3,8 @@ project(SlightlyPrettyChatQtClient LANGUAGES CXX)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_CURRENT_SOURCE_DIR}/forms)
-
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui Qml Quick QuickWidgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui Qml Quick QuickWidgets WebSockets)
 
 set(QML_PATH_FROM_ENV "$ENV{QML2_IMPORT_PATH}")
 if(QML_PATH_FROM_ENV AND EXISTS "${QML_PATH_FROM_ENV}")
@@ -21,31 +18,44 @@ endif()
 add_executable(qt_client_app
     src/main.cpp
 
-    src/backend/backend.cpp
-    include/backend/backend.h
+    src/controllers/app_controller.cpp
+    include/controllers/app_controller.h
 
-    src/ui/mainwindow.cpp
-    include/ui/mainwindow.h
+    src/services/ws_service.cpp
+    include/services/ws_service.h
 
-    src/ui/connectwidget.cpp
-    include/ui/connectwidget.h
+    src/services/config_service.cpp
+    include/services/config_service.h
 
-    src/ui/loginscreen.cpp
-    include/ui/loginscreen.h
+    src/models/server_list_model.cpp
+    include/models/server_list_model.h
+
+    src/models/room_list_model.cpp
+    include/models/room_list_model.h
+
+    src/models/message_list_model.cpp
+    include/models/message_list_model.h
+
+    src/models/user_list_model.cpp
+    include/models/user_list_model.h
+
+    src/utils/text_util.cpp
+    include/utils/text_util.h
 
     resources.qrc
 )
 
 target_include_directories(qt_client_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(qt_client_app PRIVATE 
-        common_lib 
+target_link_libraries(qt_client_app PRIVATE
+        common_lib
         Qt6::Core
         Qt6::Gui
         Qt6::Qml
         Qt6::Quick
         Qt6::QuickWidgets
         Qt6::Widgets
+        Qt6::WebSockets
 )
 
 if(WIN32)
