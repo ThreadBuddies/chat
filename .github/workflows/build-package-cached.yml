@@ -43,6 +43,17 @@ jobs:
         shell: bash
         run: ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
+      - name: Cache Homebrew (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/Homebrew
+          key: ${{ runner.os }}-brew-mono
+
+      - name: Install Mono (macOS)
+        if: runner.os == 'macOS'
+        run: brew install mono
+
       - name: Install Dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
