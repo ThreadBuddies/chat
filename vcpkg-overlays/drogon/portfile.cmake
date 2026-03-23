@@ -42,7 +42,8 @@ vcpkg_fixup_pkgconfig()
 
 # Copy drogon_ctl
 if("ctl" IN_LIST FEATURES)
-    vcpkg_copy_tools(TOOL_NAMES _drogon_ctl drogon_ctl dg_ctl AUTO_CLEAN)
+    vcpkg_copy_tools(TOOL_NAMES _drogon_ctl drogon_ctl AUTO_CLEAN)
+    file(REMOVE "${CURRENT_PACKAGES_DIR}/bin/dg_ctl" "${CURRENT_PACKAGES_DIR}/debug/bin/dg_ctl")
 endif()
 
 # Remove includes in debug
