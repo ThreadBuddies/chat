@@ -9,6 +9,9 @@ on:
     branches:
       - main
 
+env:
+  MACOSX_DEPLOYMENT_TARGET: "13.3"
+
 jobs:
   build:
     name: ${{ matrix.os }}-${{ github.workflow }}
@@ -23,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-13, windows-2025]
+        os: [ubuntu-24.04, macos-15-intel, windows-2025]
 
     steps:
       - uses: actions/checkout@v4
@@ -42,6 +45,17 @@ jobs:
       - name: Bootstrap vcpkg
         shell: bash
         run: ./vcpkg/bootstrap-vcpkg.sh -disableMetrics
+
+      - name: Cache Homebrew (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/Homebrew
+          key: ${{ runner.os }}-brew-mono
+
+      - name: Install Mono (macOS)
+        if: runner.os == 'macOS'
+        run: brew install mono
 
       - name: Install Dependencies (Linux)
         if: runner.os == 'Linux'
@@ -274,7 +288,3 @@ jobs:
             --notes "$NOTES" \
             --latest \
             final_releases/*
-
-
-
-
