@@ -70,6 +70,11 @@ if(WIN32)
         COMPONENT qt_client
     )
 
+    install(FILES $<TARGET_RUNTIME_DLLS:qt_client_app>
+        DESTINATION .
+        COMPONENT qt_client
+    )
+
     install(CODE "
         execute_process(
             COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" 
