@@ -1,11 +1,12 @@
-#include <controllers/app_controller.h>
-#include <services/ws_service.h>
-#include <services/config_service.h>
-#include <models/server_list_model.h>
-#include <models/room_list_model.h>
-#include <models/message_list_model.h>
+#include <controllers/AppController.h>
+#include <services/WsService.h>
+#include <services/ConfigService.h>
+#include <models/ServerListModel.h>
+#include <models/RoomListModel.h>
+#include <models/MessageListModel.h>
 #include <common/utils/passwordUtil.h>
-#include <utils/text_util.h>
+#include <utils/TextUtil.h>
+#include <QtConcurrent>
 
 namespace qt_client {
 
@@ -203,28 +204,36 @@ void AppController::onInitialAuthResponse(bool success, const QString& salt) {
         setErrorMessage("Failed to login");
         return;
     }
-    try {
-        std::string password = m_pendingAuth.password.toStdString();
-        std::string new_salt;
-        std::string hash;
 
-        if (salt.isEmpty()) {
-            new_salt = common::password::generate_salt();
-            hash = common::password::hash_password(password, new_salt);
-            m_ws->sendAuth(
-                std::move(hash),
-                std::move(password),
-                std::move(new_salt));
-        } else {
-            new_salt = salt.toStdString();
-            hash = common::password::hash_password(password, new_salt);
-            m_ws->sendAuth(std::move(hash));
-        }
-    } catch (const std::exception& ex) {
-        setErrorMessage(ex.what());
-        m_pendingAuth.clear();
-    }
+    std::string password = m_pendingAuth.password.toStdString();
+    std::string serverSalt = salt.toStdString();
     m_pendingAuth.clear();
+
+    struct HashResult {
+        std::string hash;
+        std::string salt;
+        std::string password;
+        bool isNewSalt;
+    };
+
+    QtConcurrent::run([password, serverSalt]() -> HashResult {
+        HashResult res;
+        res.isNewSalt = serverSalt.empty();
+        res.salt = res.isNewSalt ? common::password::generate_salt() : serverSalt;
+        res.hash = common::password::hash_password(password, res.salt);
+        res.password = password;
+        return res;
+
+    }).then(this, [this](HashResult res) {
+        if (res.isNewSalt) {
+            m_ws->sendAuth(std::move(res.hash), std::move(res.password), std::move(res.salt));
+        } else {
+            m_ws->sendAuth(std::move(res.hash));
+        }
+
+    }).onFailed(this, [this](const std::exception& ex) {
+        setErrorMessage(ex.what());
+    });
 }
 
 void AppController::onAuthSuccess(User user, QList<RoomData> rooms) {
@@ -244,15 +253,27 @@ void AppController::onInitialRegisterResponse(bool success, const QString& err) 
         setErrorMessage("Registration failed! " + err);
         return;
     }
-    try {
-        std::string salt = common::password::generate_salt();
-        std::string hash = common::password::hash_password(m_pendingAuth.password.toStdString(), salt);
-        m_ws->sendRegister(std::move(salt), std::move(hash));
-    } catch (const std::exception& ex) {
+
+    std::string password = m_pendingAuth.password.toStdString();
+
+    struct HashResult {
+        std::string hash;
+        std::string salt;
+    };
+
+    QtConcurrent::run([password]() -> HashResult {
+        HashResult res;
+        res.salt = common::password::generate_salt();
+        res.hash = common::password::hash_password(password, res.salt);
+        return res;
+
+    }).then(this, [this](HashResult res) {
+        m_ws->sendRegister(std::move(res.salt), std::move(res.hash));
+
+    }).onFailed(this, [this](const std::exception& ex) {
         setErrorMessage(ex.what());
         m_pendingAuth.clear();
-        return;
-    }
+    });
 }
 
 void AppController::onRegisterSuccess() {

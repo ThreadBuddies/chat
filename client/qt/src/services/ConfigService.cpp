@@ -1,4 +1,4 @@
-#include "services/config_service.h"
+#include <services/ConfigService.h>
 
 #include <QStandardPaths>
 #include <QDir>

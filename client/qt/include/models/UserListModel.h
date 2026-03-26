@@ -2,7 +2,7 @@
 
 #include <QAbstractListModel>
 #include <QList>
-#include <models/user.h>
+#include <models/User.h>
 
 namespace qt_client {
 

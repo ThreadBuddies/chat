@@ -5,13 +5,13 @@
 #include <QMap>
 #include <QTimer>
 
-#include <services/ws_service.h>
-#include <services/config_service.h>
-#include <models/server_list_model.h>
-#include <models/room_list_model.h>
-#include <models/message_list_model.h>
-#include <models/user_list_model.h>
-#include <models/user.h>
+#include <services/WsService.h>
+#include <services/ConfigService.h>
+#include <models/ServerListModel.h>
+#include <models/RoomListModel.h>
+#include <models/MessageListModel.h>
+#include <models/UserListModel.h>
+#include <models/User.h>
 
 namespace qt_client {
 

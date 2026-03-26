@@ -1,13 +1,15 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQuickStyle>
 
-#include "controllers/app_controller.h"
-#include "services/config_service.h"
-#include "services/ws_service.h"
+#include <controllers/AppController.h>
+#include <services/ConfigService.h>
+#include <services/WsService.h>
 
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
+    QQuickStyle::setStyle("Fusion");
     app.setApplicationName("SlightlyPrettyChat");
     app.setOrganizationName("ThreadBuddies");
 

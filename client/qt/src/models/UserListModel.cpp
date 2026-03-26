@@ -1,4 +1,4 @@
-#include <models/user_list_model.h>
+#include <models/UserListModel.h>
 #include <QSet>
 
 namespace qt_client {

@@ -6,9 +6,9 @@
 #include <QStringList>
 #include <QList>
 
-#include <models/room_list_model.h>
-#include <models/message_list_model.h>
-#include <models/user.h>
+#include <models/RoomListModel.h>
+#include <models/MessageListModel.h>
+#include <models/User.h>
 
 namespace chat {
 class Envelope;

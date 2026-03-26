@@ -1,4 +1,4 @@
-#include <utils/text_util.h>
+#include <utils/TextUtil.h>
 
 namespace qt_client {
 namespace TextUtil {

@@ -1,4 +1,4 @@
-#include "models/room_list_model.h"
+#include <models/RoomListModel.h>
 #include <QDebug>
 
 namespace qt_client {

@@ -3,6 +3,7 @@
 #include <QAbstractListModel>
 #include <QList>
 #include <QString>
+#include <limits>
 
 namespace qt_client {
 
@@ -22,7 +23,7 @@ class MessageListModel : public QAbstractListModel {
 public:
     static constexpr int MAX_MESSAGES = 100;
     static constexpr int CHUNK_SIZE = 25;
-    static constexpr qint64 LATEST_TS = 32517734834000000LL;
+    static constexpr qint64 LATEST_TS = std::numeric_limits<qint64>::max();
 
     enum Roles {
         UsernameRole = Qt::UserRole + 1,

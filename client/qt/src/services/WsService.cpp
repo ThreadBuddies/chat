@@ -1,4 +1,4 @@
-#include <services/ws_service.h>
+#include <services/WsService.h>
 #include <common/version.h>
 #include <common/proto/chat.pb.h>
 

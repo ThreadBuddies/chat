@@ -1,4 +1,4 @@
-#include "models/server_list_model.h"
+#include <models/ServerListModel.h>
 
 namespace qt_client {
 
