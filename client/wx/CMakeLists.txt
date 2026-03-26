@@ -18,7 +18,6 @@ add_executable(wx_client_app
     src/textUtil.cpp
     src/userNameWidget.cpp
     src/messageView.cpp
-    src/passwordUtil.cpp
     src/initialPanel.cpp
     src/serversPanel.cpp
     src/roomHeaderPanel.cpp

@@ -3,11 +3,8 @@ project(SlightlyPrettyChatQtClient LANGUAGES CXX)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
 
-set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_CURRENT_SOURCE_DIR}/forms)
-
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui Qml Quick QuickWidgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Concurrent WebSockets)
 
 set(QML_PATH_FROM_ENV "$ENV{QML2_IMPORT_PATH}")
 if(QML_PATH_FROM_ENV AND EXISTS "${QML_PATH_FROM_ENV}")
@@ -21,31 +18,44 @@ endif()
 add_executable(qt_client_app
     src/main.cpp
 
-    src/backend/backend.cpp
-    include/backend/backend.h
+    src/controllers/AppController.cpp
+    include/controllers/AppController.h
 
-    src/ui/mainwindow.cpp
-    include/ui/mainwindow.h
+    src/services/WsService.cpp
+    include/services/WsService.h
 
-    src/ui/connectwidget.cpp
-    include/ui/connectwidget.h
+    src/services/ConfigService.cpp
+    include/services/ConfigService.h
 
-    src/ui/loginscreen.cpp
-    include/ui/loginscreen.h
+    src/models/ServerListModel.cpp
+    include/models/ServerListModel.h
+
+    src/models/RoomListModel.cpp
+    include/models/RoomListModel.h
+
+    src/models/MessageListModel.cpp
+    include/models/MessageListModel.h
+
+    src/models/UserListModel.cpp
+    include/models/UserListModel.h
+
+    src/utils/TextUtil.cpp
+    include/utils/TextUtil.h
 
     resources.qrc
 )
 
 target_include_directories(qt_client_app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(qt_client_app PRIVATE 
-        common_lib 
+target_link_libraries(qt_client_app PRIVATE
+        common_lib
         Qt6::Core
         Qt6::Gui
         Qt6::Qml
         Qt6::Quick
-        Qt6::QuickWidgets
-        Qt6::Widgets
+        Qt6::QuickControls2
+        Qt6::Concurrent
+        Qt6::WebSockets
 )
 
 if(WIN32)
@@ -56,6 +66,11 @@ if(WIN32)
 
     install(
         TARGETS qt_client_app
+        DESTINATION .
+        COMPONENT qt_client
+    )
+
+    install(FILES $<TARGET_RUNTIME_DLLS:qt_client_app>
         DESTINATION .
         COMPONENT qt_client
     )

@@ -3,7 +3,7 @@
 #include <client/wsClient.h>
 #include <client/chatInterface.h>
 #include <client/chatPanel.h>
-#include <client/passwordUtil.h>
+#include <common/utils/passwordUtil.h>
 #include <client/textUtil.h>
 #include <common/utils/limits.h>
 
@@ -140,10 +140,10 @@ void AccountSettingsPanel::OnPasswordChangeContinue(const std::string& currentSa
     }
 
     try {
-        std::string oldPasswordHash = password::hash_password(m_oldPassword.utf8_string(), currentSalt);
+        std::string oldPasswordHash = common::password::hash_password(m_oldPassword.utf8_string(), currentSalt);
 
-        std::string newSalt = password::generate_salt();
-        std::string newPasswordHash = password::hash_password(m_newPassword.utf8_string(), newSalt);
+        std::string newSalt = common::password::generate_salt();
+        std::string newPasswordHash = common::password::hash_password(m_newPassword.utf8_string(), newSalt);
 
         mainWin->wsClient->changePassword(oldPasswordHash, newPasswordHash, newSalt);
 

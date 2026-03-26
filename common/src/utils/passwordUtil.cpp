@@ -1,4 +1,4 @@
-#include "client/passwordUtil.h"
+#include "common/utils/passwordUtil.h"
 #include <argon2.h>
 #include <stdexcept>
 #include <vector>
@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <random>
 
-namespace client {
+namespace common {
 
 namespace password {
 
@@ -55,4 +55,4 @@ std::string generate_salt() {
 
 } // namespace password
 
-} // namespace client
+} // namespace common

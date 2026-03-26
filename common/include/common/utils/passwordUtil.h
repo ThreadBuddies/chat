@@ -3,7 +3,7 @@
 #include <string>
 #include <stdint.h>
 
-namespace client {
+namespace common {
 
 namespace password {
 

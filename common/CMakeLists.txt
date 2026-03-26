@@ -23,6 +23,7 @@ add_custom_command(
 add_library(common_lib STATIC
   ${PROTO_OUT_DIR}/chat.pb.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/utils.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/passwordUtil.cpp
 )
 
 target_include_directories(common_lib PUBLIC
