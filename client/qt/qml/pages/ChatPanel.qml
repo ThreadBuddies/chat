@@ -205,7 +205,7 @@ Item {
                             text: "No rooms yet"
                             color: textMuted
                             font.pixelSize: 13
-                            visible: myRoomsView.count === 0
+                            visible: appController.roomListModel.joinedCount === 0
                         }
                     }
 
@@ -302,7 +302,7 @@ Item {
                             text: "No public rooms"
                             color: textMuted
                             font.pixelSize: 13
-                            visible: browseView.count === 0
+                            visible: appController.roomListModel.browseCount === 0
                         }
                     }
                 }
