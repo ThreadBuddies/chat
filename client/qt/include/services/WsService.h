@@ -33,7 +33,6 @@ public:
     void sendInitialRegister(const QString& username);
     void sendRegister(std::string&& salt, std::string&& hash);
     void sendJoinRoom(int32_t roomId);
-    void sendLeaveRoom();
     void sendCreateRoom(const QString& name);
     void sendMessage(const QString& text);
     void sendGetMessages(int32_t limit, qint64 offsetTs);
