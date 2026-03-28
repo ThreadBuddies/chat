@@ -51,7 +51,8 @@ void UserListModel::addUser(const User& user) {
     if (it != m_users.end()) {
         ++it->count;
     } else {
-		m_users.push_back(user);
+        m_users.emplace_back(user.id, user.username, user.role);
+        m_users.back().count = 1;
     }
     setUsers(std::move(m_users));
 }
