@@ -135,7 +135,6 @@ void AppController::connectSignals() {
     connect(m_ws, &WebSocketService::roomRenamed,
         this, &AppController::onRoomRenamed);
 
-
     connect(m_ws, &WebSocketService::becameMember,
             this, &AppController::onBecameMember);
 
@@ -410,15 +409,25 @@ void AppController::onUserStoppedTyping(int32_t userId, const QString& username)
 
 // ============ Lifecycle handlers ============
 
-void AppController::onLoggedOut() {
+void AppController::resetSessionState() {
     m_currentUser.username.clear();
     m_currentUser.id = -1;
     emit currentUsernameChanged();
     emit currentUserIdChanged();
+    m_currentRoom.id = -1;
+    m_currentRoom.name.clear();
+    emit currentRoomIdChanged();
+    emit currentRoomNameChanged();
+    m_pendingAuth.clear();
+    m_optimisticMemberRoomId = -1;
     m_roomListModel->clear();
     m_messageListModel->clear();
     m_userListModel->clear();
     clearTypingState();
+}
+
+void AppController::onLoggedOut() {
+    resetSessionState();
     setCurrentPage(Page::Auth);
 }
 
@@ -433,12 +442,7 @@ void AppController::onGenericError(const QString& msg) {
 void AppController::onDisconnected() {
     if (m_currentPage != Page::ServerList) {
         setErrorMessage("Connection lost");
-        m_currentUser.username.clear();
-        m_currentUser.id = -1;
-        m_roomListModel->clear();
-        m_messageListModel->clear();
-        m_userListModel->clear();
-        clearTypingState();
+        resetSessionState();
         setCurrentPage(Page::ServerList);
     }
 }
@@ -556,11 +560,8 @@ void AppController::logout() {
 
 void AppController::disconnectFromServer() {
     m_ws->disconnect();
+    resetSessionState();
     m_serverListModel->clear();
-    m_roomListModel->clear();
-    m_messageListModel->clear();
-    m_userListModel->clear();
-    clearTypingState();
     setCurrentPage(Page::ServerList);
 }
 

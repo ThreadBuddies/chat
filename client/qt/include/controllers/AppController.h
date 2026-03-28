@@ -96,6 +96,7 @@ signals:
 private:
     void setErrorMessage(const QString& msg);
     void connectSignals();
+    void resetSessionState();
     void clearTypingState();
 
     // --- Signal handlers ---
@@ -114,7 +115,6 @@ private:
 
     void onRoomDeleted(int roomId);
     void onJoinedRoom(QList<User> allUsers, QList<User> activeUsers);
-    void onLeftRoom();
     void onNewRoomCreated(const RoomData& room, int32_t ownerId);
     void onRoomRenamed(int roomId, const QString& newName);
     void onJoinRoomFailed(const QString& error);
