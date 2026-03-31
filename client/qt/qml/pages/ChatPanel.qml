@@ -325,12 +325,7 @@ Item {
                                 text: parent.text; font: parent.font; color: AppPalette.textSecondary
                                 horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                             }
-                            onClicked: {
-                                // TODO: account settings
-                            }
-                            HoverHandler {
-                                cursorShape: Qt.PointingHandCursor
-                            }
+                            onClicked: appController.openAccountSettings()
                             HoverHandler { cursorShape: Qt.PointingHandCursor }
                         }
                         Button {

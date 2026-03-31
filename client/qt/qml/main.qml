@@ -19,6 +19,7 @@ ApplicationWindow {
         ServersPage {}      // 1 - Servers
         AuthPage {}         // 2 - Auth
         ChatPanel {}        // 3 - Chat
+        AccountSettingsPage {} // 4 - AccountSettings
     }
 
     // Error banner at the bottom
