@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "pages"
+import "components"
 
 ApplicationWindow {
     id: root
@@ -18,6 +19,7 @@ ApplicationWindow {
         ServersPage {}      // 1 - Servers
         AuthPage {}         // 2 - Auth
         ChatPanel {}        // 3 - Chat
+        AccountSettingsPage {} // 4 - AccountSettings
     }
 
     // Error banner at the bottom
@@ -25,10 +27,15 @@ ApplicationWindow {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottomMargin: 10
-        width: errorLabel.implicitWidth + 24
-        height: errorLabel.implicitHeight + 16
-        radius: 6
-        color: "#d32f2f"
+
+        width: Math.min(parent.width * 0.7, errorLabel.implicitWidth + 32)
+        height: errorLabel.implicitHeight + 20
+
+        radius: 8
+        color: AppPalette.colorErrorBg
+        border.color: AppPalette.colorErrorBorder
+        border.width: 1
+        
         visible: appController.errorMessage.length > 0
         opacity: visible ? 1.0 : 0.0
 
@@ -38,7 +45,7 @@ ApplicationWindow {
             id: errorLabel
             anchors.centerIn: parent
             text: appController.errorMessage
-            color: "white"
+            color: AppPalette.colorError
             font.pixelSize: 13
         }
 

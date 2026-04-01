@@ -7,25 +7,10 @@ import "../components"
 Item {
     id: root
 
-    // ── Palette ──────────────────────────────────────────────
-    // Neutral tones inspired by the mockup; easy to swap.
-    readonly property color bgBase:       "#ffffff"
-    readonly property color bgSurface:    "#f7f7f8"
-    readonly property color bgSurfaceAlt: "#f0f0f2"
-    readonly property color bgHover:      "#eaeaed"
-    readonly property color bgSelected:   "#e0ecfa"
-    readonly property color accent:       "#2563EB"   // blue-600
-    readonly property color accentLight:  "#eff6ff"   // blue-50
-    readonly property color accentMid:    "#93c5fd"   // blue-300
-    readonly property color textPrimary:  "#18181b"
-    readonly property color textSecondary:"#71717a"
-    readonly property color textMuted:    "#a1a1aa"
-    readonly property color borderColor:  "#e4e4e7"
-    readonly property color greenOnline:  "#16a34a"
-    readonly property color orangeWarn:   "#d97706"
-    readonly property color coralUser:    "#D85A30"
+    // ── Chat-specific colours ────────────────────────────────────────────────
+    readonly property color greenOnline: AppPalette.colorSuccess
 
-    // ── Helpers ──────────────────────────────────────────────
+    // ── Helpers ──────────────────────────────────────────────────────────────
     function rightsLabel(rights) {
         if (rights === 2) return "owner"
         if (rights === 1) return "mod"
@@ -33,9 +18,9 @@ Item {
         return ""
     }
     function rightsColor(rights) {
-        if (rights === 2) return orangeWarn
-        if (rights === 1) return accent
-        if (rights === 3) return "#dc2626"
+        if (rights === 2) return AppPalette.colorWarn
+        if (rights === 1) return AppPalette.accent
+        if (rights === 3) return AppPalette.colorError
         return "transparent"
     }
     // Stable per-user color from username hash
@@ -56,8 +41,8 @@ Item {
         Rectangle {
             Layout.preferredWidth: 220
             Layout.fillHeight: true
-            color: bgSurface
-            border.color: borderColor
+            color: AppPalette.bgSurface
+            border.color: AppPalette.borderColor
             border.width: 1
 
             ColumnLayout {
@@ -79,21 +64,21 @@ Item {
 
                             Rectangle {
                                 anchors.fill: parent
-                                color: parent.active ? "transparent" : "transparent"
+                                color: "transparent"
 
                                 Text {
                                     anchors.centerIn: parent
                                     text: modelData
                                     font.pixelSize: 12
                                     font.weight: parent.parent.active ? Font.DemiBold : Font.Normal
-                                    color: parent.parent.active ? accent : textSecondary
+                                    color: parent.parent.active ? AppPalette.accent : AppPalette.textSecondary
                                 }
                                 Rectangle {
                                     anchors.bottom: parent.bottom
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: parent.width - 24
                                     height: 2
-                                    color: accent
+                                    color: AppPalette.accent
                                     visible: parent.parent.active
                                     radius: 1
                                 }
@@ -112,7 +97,7 @@ Item {
                     }
                 }
 
-                Rectangle { Layout.fillWidth: true; height: 1; color: borderColor }
+                Rectangle { Layout.fillWidth: true; height: 1; color: AppPalette.borderColor }
 
                 // ── Room lists ────────────────────────────
                 StackLayout {
@@ -125,17 +110,12 @@ Item {
                         id: myRoomsView
                         clip: true
                         model: appController.roomListModel
-                        
+
                         ScrollBar.vertical: AppScrollBar {
                             anchors.right: parent.right
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
                             anchors.rightMargin: 2
-
-                            accent: root.accent
-                            accentMid: root.accentMid
-                            textMuted: root.textMuted
-                            bgHover: root.bgHover
                         }
 
                         delegate: Item {
@@ -152,8 +132,8 @@ Item {
                                 radius: 8
                                 color: {
                                     var selected = model.roomId === appController.currentRoomId
-                                    if (selected) return bgSelected
-                                    if (myRoomMa.containsMouse) return bgHover
+                                    if (selected) return AppPalette.bgSelected
+                                    if (myRoomMa.containsMouse) return AppPalette.bgHover
                                     return "transparent"
                                 }
                                 border.color: "transparent"
@@ -175,7 +155,7 @@ Item {
                                             text: model.roomName
                                             font.pixelSize: 13
                                             font.weight: Font.DemiBold
-                                            color: textPrimary
+                                            color: AppPalette.textPrimary
                                             elide: Text.ElideRight
                                             Layout.fillWidth: true
                                         }
@@ -203,7 +183,7 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: "No rooms yet"
-                            color: textMuted
+                            color: AppPalette.textMuted
                             font.pixelSize: 13
                             visible: appController.roomListModel.joinedCount === 0
                         }
@@ -220,11 +200,6 @@ Item {
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
                             anchors.rightMargin: 2
-
-                            accent: root.accent
-                            accentMid: root.accentMid
-                            textMuted: root.textMuted
-                            bgHover: root.bgHover
                         }
                         delegate: Item {
                             visible: !model.isJoined
@@ -251,7 +226,7 @@ Item {
                                             text: model.roomName
                                             font.pixelSize: 13
                                             font.weight: Font.DemiBold
-                                            color: textPrimary
+                                            color: AppPalette.textPrimary
                                             elide: Text.ElideRight
                                             Layout.fillWidth: true
                                         }
@@ -267,14 +242,14 @@ Item {
                                         onClicked: appController.becomeMember(model.roomId)
                                         background: Rectangle {
                                             radius: 6
-                                            color: accentLight
-                                            border.color: accent
+                                            color: AppPalette.accentLight
+                                            border.color: AppPalette.accent
                                             border.width: 0.5
                                         }
                                         contentItem: Text {
                                             text: parent.text
                                             font: parent.font
-                                            color: accent
+                                            color: AppPalette.accent
                                             horizontalAlignment: Text.AlignHCenter
                                             verticalAlignment: Text.AlignVCenter
                                         }
@@ -285,13 +260,11 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    // no click — use the Join button
-                                    onEntered: browseBg.color = bgHover
+                                    onEntered: browseBg.color = AppPalette.bgHover
                                     onExited:  browseBg.color = "transparent"
-                                    // let button clicks pass through
                                     propagateComposedEvents: true
-                                    onClicked: function(mouse) { mouse.accepted = false }
-                                    onPressed: function(mouse) { mouse.accepted = false }
+                                    onClicked:  function(mouse) { mouse.accepted = false }
+                                    onPressed:  function(mouse) { mouse.accepted = false }
                                     onReleased: function(mouse) { mouse.accepted = false }
                                 }
                             }
@@ -300,14 +273,14 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: "No public rooms"
-                            color: textMuted
+                            color: AppPalette.textMuted
                             font.pixelSize: 13
                             visible: appController.roomListModel.browseCount === 0
                         }
                     }
                 }
 
-                Rectangle { Layout.fillWidth: true; height: 1; color: borderColor }
+                Rectangle { Layout.fillWidth: true; height: 1; color: AppPalette.borderColor }
 
                 // ── Bottom controls ──────────────────────
                 ColumnLayout {
@@ -325,14 +298,14 @@ Item {
                         onClicked: createRoomDialog.open()
                         background: Rectangle {
                             radius: 8
-                            color: bgBase
-                            border.color: borderColor
+                            color: AppPalette.bgBase
+                            border.color: AppPalette.borderColor
                             border.width: 0.5
                         }
                         contentItem: Text {
                             text: parent.text
                             font: parent.font
-                            color: textPrimary
+                            color: AppPalette.textPrimary
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
@@ -347,32 +320,26 @@ Item {
                             Layout.fillWidth: true
                             implicitHeight: 30
                             font.pixelSize: 11
-                            background: Rectangle { radius: 8; color: parent.hovered ? accentLight : "transparent"; border.color: borderColor; border.width: 0.5 }
+                            background: Rectangle { radius: 8; color: parent.hovered ? AppPalette.accentLight : "transparent"; border.color: AppPalette.borderColor; border.width: 0.5 }
                             contentItem: Text {
-                                text: parent.text; font: parent.font; color: textSecondary
+                                text: parent.text; font: parent.font; color: AppPalette.textSecondary
                                 horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                             }
-                            onClicked: {
-                                // TODO: account settings
-                            }
-                            HoverHandler {
-                                cursorShape: Qt.PointingHandCursor
-                            }
+                            onClicked: appController.openAccountSettings()
+                            HoverHandler { cursorShape: Qt.PointingHandCursor }
                         }
                         Button {
                             text: "Logout"
                             Layout.fillWidth: true
                             implicitHeight: 30
                             font.pixelSize: 11
-                            background: Rectangle { radius: 8; color: parent.hovered ? accentLight : "transparent"; border.color: borderColor; border.width: 0.5 }
+                            background: Rectangle { radius: 8; color: parent.hovered ? AppPalette.accentLight : "transparent"; border.color: AppPalette.borderColor; border.width: 0.5 }
                             contentItem: Text {
-                                text: parent.text; font: parent.font; color: textSecondary
+                                text: parent.text; font: parent.font; color: AppPalette.textSecondary
                                 horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                             }
                             onClicked: appController.logout()
-                            HoverHandler {
-                                cursorShape: Qt.PointingHandCursor
-                            }
+                            HoverHandler { cursorShape: Qt.PointingHandCursor }
                         }
                     }
                 }
@@ -393,7 +360,7 @@ Item {
                     anchors.centerIn: parent
                     text: "Select a room to start chatting"
                     font.pixelSize: 16
-                    color: textMuted
+                    color: AppPalette.textMuted
                 }
             }
 
@@ -405,8 +372,8 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 48
-                    color: bgBase
-                    border.color: borderColor
+                    color: AppPalette.bgBase
+                    border.color: AppPalette.borderColor
                     border.width: 1
 
                     RowLayout {
@@ -419,14 +386,14 @@ Item {
                             text: appController.currentRoomName
                             font.pixelSize: 15
                             font.weight: Font.DemiBold
-                            color: textPrimary
+                            color: AppPalette.textPrimary
                             Layout.fillWidth: true
                         }
                         Text {
                             visible: appController.onlineCount !== undefined
                             text: (appController.onlineCount || 0) + " online"
                             font.pixelSize: 11
-                            color: textMuted
+                            color: AppPalette.textMuted
                         }
                         Button {
                             text: "Members"
@@ -435,10 +402,10 @@ Item {
                             onClicked: rightSidebar.visible = !rightSidebar.visible
                             background: Rectangle {
                                 radius: 6; color: "transparent"
-                                border.color: borderColor; border.width: 0.5
+                                border.color: AppPalette.borderColor; border.width: 0.5
                             }
                             contentItem: Text {
-                                text: parent.text; font: parent.font; color: textSecondary
+                                text: parent.text; font: parent.font; color: AppPalette.textSecondary
                                 horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                             }
                         }
@@ -463,11 +430,6 @@ Item {
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
                             anchors.rightMargin: 2
-
-                            accent: root.accent
-                            accentMid: root.accentMid
-                            textMuted: root.textMuted
-                            bgHover: root.bgHover
                         }
 
                         delegate: Item {
@@ -476,7 +438,7 @@ Item {
 
                             Rectangle {
                                 anchors.fill: parent
-                                color: index % 2 === 0 ? bgBase : bgSurface
+                                color: index % 2 === 0 ? AppPalette.bgBase : AppPalette.bgSurface
                             }
 
                             ColumnLayout {
@@ -501,7 +463,7 @@ Item {
                                     Text {
                                         text: model.formattedTime
                                         font.pixelSize: 10
-                                        color: textMuted
+                                        color: AppPalette.textMuted
                                     }
                                 }
 
@@ -510,7 +472,7 @@ Item {
                                     wrapMode: Text.Wrap
                                     Layout.fillWidth: true
                                     font.pixelSize: 14
-                                    color: textPrimary
+                                    color: AppPalette.textPrimary
                                     lineHeight: 1.4
                                 }
                             }
@@ -529,7 +491,7 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: "No messages yet — say hi!"
-                            color: textMuted
+                            color: AppPalette.textMuted
                             font.pixelSize: 14
                             visible: messageView.count === 0
                         }
@@ -545,21 +507,20 @@ Item {
                         anchors.bottomMargin: 12
                         visible: opacity > 0
                         opacity: !messageView.atYEnd ? 1.0 : 0.0
-                        color: scrollBtnMa.containsMouse ? bgHover : bgBase
-                        border.color: borderColor
+                        color: scrollBtnMa.containsMouse ? AppPalette.bgHover : AppPalette.bgBase
+                        border.color: AppPalette.borderColor
                         border.width: 1
 
                         Behavior on opacity {
                             NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
                         }
 
-                        // Down-chevron drawn with a rotated rectangle
                         Text {
                             anchors.centerIn: parent
-                            text: "\u2193"          // ↓
+                            text: "\u2193"
                             font.pixelSize: 18
                             font.weight: Font.DemiBold
-                            color: accent
+                            color: AppPalette.accent
                         }
 
                         layer.enabled: true
@@ -598,7 +559,7 @@ Item {
                         text: appController.typingUsers || ""
                         font.pixelSize: 12
                         font.italic: true
-                        color: textMuted
+                        color: AppPalette.textMuted
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
@@ -607,8 +568,8 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 54
-                    color: bgSurface
-                    border.color: borderColor
+                    color: AppPalette.bgSurface
+                    border.color: AppPalette.borderColor
                     border.width: 1
 
                     RowLayout {
@@ -621,11 +582,14 @@ Item {
                             Layout.fillWidth: true
                             placeholderText: "Type a message..."
                             font.pixelSize: 13
+                            color: AppPalette.textPrimary
+                            selectionColor: AppPalette.accent
+                            selectedTextColor: AppPalette.bgBase
 
                             background: Rectangle {
                                 radius: 8
-                                color: bgBase
-                                border.color: msgInput.activeFocus ? accent : borderColor
+                                color: AppPalette.bgBase
+                                border.color: msgInput.activeFocus ? AppPalette.accent : AppPalette.borderColor
                                 border.width: msgInput.activeFocus ? 1.5 : 0.5
                             }
 
@@ -662,13 +626,13 @@ Item {
                             }
                             background: Rectangle {
                                 radius: 8
-                                color: parent.enabled ? accentLight : bgSurfaceAlt
-                                border.color: parent.enabled ? accent : borderColor
+                                color: parent.enabled ? AppPalette.accentLight : AppPalette.bgSurfaceAlt
+                                border.color: parent.enabled ? AppPalette.accent : AppPalette.borderColor
                                 border.width: 0.5
                             }
                             contentItem: Text {
                                 text: parent.text; font: parent.font
-                                color: parent.enabled ? accent : textMuted
+                                color: parent.enabled ? AppPalette.accent : AppPalette.textMuted
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                             }
@@ -685,8 +649,8 @@ Item {
             id: rightSidebar
             Layout.preferredWidth: 170
             Layout.fillHeight: true
-            color: bgSurface
-            border.color: borderColor
+            color: AppPalette.bgSurface
+            border.color: AppPalette.borderColor
             border.width: 1
             visible: appController.currentRoomId >= 0
 
@@ -704,7 +668,6 @@ Item {
                     spacing: 2
 
                     delegate: Item {
-                        // Show all members (online first ideally — depends on model sorting)
                         width: membersView.width
                         height: 24
 
@@ -714,12 +677,12 @@ Item {
 
                             Rectangle {
                                 width: 7; height: 7; radius: 3.5
-                                color: model.count > 0 ? greenOnline : borderColor
+                                color: model.count > 0 ? greenOnline : AppPalette.borderColor
                             }
                             Text {
                                 text: model.userName
                                 font.pixelSize: 12
-                                color: model.count > 0 ? textPrimary : textMuted
+                                color: model.count > 0 ? AppPalette.textPrimary : AppPalette.textMuted
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
@@ -763,20 +726,23 @@ Item {
             Text {
                 text: "Room name"
                 font.pixelSize: 13
-                color: textSecondary
+                color: AppPalette.textSecondary
             }
             TextField {
                 id: newRoomField
                 Layout.fillWidth: true
                 placeholderText: "e.g. my-room"
                 font.pixelSize: 13
+                color: AppPalette.textPrimary
+                selectionColor: AppPalette.accent
+                selectedTextColor: AppPalette.bgBase
                 maximumLength: 64
                 onAccepted: createRoomDialog.accept()
 
                 background: Rectangle {
                     radius: 8
-                    color: bgBase
-                    border.color: newRoomField.activeFocus ? accent : borderColor
+                    color: AppPalette.bgBase
+                    border.color: newRoomField.activeFocus ? AppPalette.accent : AppPalette.borderColor
                     border.width: newRoomField.activeFocus ? 1.5 : 0.5
                 }
             }

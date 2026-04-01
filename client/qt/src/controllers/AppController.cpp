@@ -162,6 +162,20 @@ void AppController::connectSignals() {
     connect(m_ws, &WebSocketService::userStoppedTyping,
             this, &AppController::onUserStoppedTyping);
 
+    // Account settings
+    connect(m_ws, &WebSocketService::changeUsernameSuccess,
+            this, &AppController::onChangeUsernameSuccess);
+    connect(m_ws, &WebSocketService::changeUsernameFailure,
+            this, &AppController::onChangeUsernameFailure);
+    connect(m_ws, &WebSocketService::getMySaltResponse,
+            this, &AppController::onGetMySaltResponse);
+    connect(m_ws, &WebSocketService::changePasswordSuccess,
+            this, &AppController::onChangePasswordSuccess);
+    connect(m_ws, &WebSocketService::changePasswordFailure,
+            this, &AppController::onChangePasswordFailure);
+    connect(m_ws, &WebSocketService::usernameChanged,
+            this, &AppController::onUsernameChanged);
+
     // Lifecycle
     connect(m_ws, &WebSocketService::loggedOut,
             this, &AppController::onLoggedOut);
@@ -419,6 +433,8 @@ void AppController::resetSessionState() {
     emit currentRoomIdChanged();
     emit currentRoomNameChanged();
     m_pendingAuth.clear();
+    m_pendingOldPassword.clear();
+    m_pendingNewPassword.clear();
     m_optimisticMemberRoomId = -1;
     m_roomListModel->clear();
     m_messageListModel->clear();
@@ -578,6 +594,9 @@ void AppController::goBack() {
     case Page::Chat:
         logout();
         break;
+    case Page::AccountSettings:
+        setCurrentPage(Page::Chat);
+        break;
     default:
         break;
     }
@@ -603,6 +622,91 @@ void AppController::stopTyping() {
         m_isTyping = false;
         m_ws->sendTypingStop();
     }
+}
+
+// ============ Account settings ============
+
+void AppController::openAccountSettings() {
+    setCurrentPage(Page::AccountSettings);
+}
+
+void AppController::changeUsername(const QString& newUsername) {
+    QString sanitized = TextUtil::sanitizeInput(newUsername);
+    if (sanitized.isNull()) {
+        emit changeUsernameFailed("Username must consist of at least 1 non-special character");
+        return;
+    }
+    if (sanitized == m_currentUser.username) {
+        emit changeUsernameFailed("The new username is the same as the current one");
+        return;
+    }
+    m_ws->sendChangeUsername(sanitized);
+}
+
+void AppController::changePassword(const QString& oldPassword, const QString& newPassword) {
+    m_pendingOldPassword = oldPassword;
+    m_pendingNewPassword = newPassword;
+    m_ws->sendGetMySalt();
+}
+
+void AppController::onChangeUsernameSuccess() {
+    emit changeUsernameSucceeded();
+}
+
+void AppController::onChangeUsernameFailure(const QString& error) {
+    emit changeUsernameFailed("Failed to change username: " + error);
+}
+
+void AppController::onGetMySaltResponse(bool success, const QString& salt) {
+    if (!success) {
+        emit changePasswordFailed("Failed to retrieve data for password change");
+        m_pendingOldPassword.clear();
+        m_pendingNewPassword.clear();
+        return;
+    }
+
+    std::string oldPassword = m_pendingOldPassword.toStdString();
+    std::string newPassword = m_pendingNewPassword.toStdString();
+    std::string currentSalt = salt.toStdString();
+    m_pendingOldPassword.clear();
+    m_pendingNewPassword.clear();
+
+    struct HashResult {
+        std::string oldHash;
+        std::string newHash;
+        std::string newSalt;
+    };
+
+    QtConcurrent::run([oldPassword, newPassword, currentSalt]() -> HashResult {
+        HashResult res;
+        res.oldHash = common::password::hash_password(oldPassword, currentSalt);
+        res.newSalt = common::password::generate_salt();
+        res.newHash = common::password::hash_password(newPassword, res.newSalt);
+        return res;
+
+    }).then(this, [this](HashResult res) {
+        m_ws->sendChangePassword(std::move(res.oldHash), std::move(res.newHash), std::move(res.newSalt));
+
+    }).onFailed(this, [this](const std::exception& ex) {
+        emit changePasswordFailed(QString("Password change failed: ") + ex.what());
+    });
+}
+
+void AppController::onChangePasswordSuccess() {
+    emit changePasswordSucceeded();
+}
+
+void AppController::onChangePasswordFailure(const QString& error) {
+    emit changePasswordFailed("Failed to change password: " + error);
+}
+
+void AppController::onUsernameChanged(int32_t userId, const QString& newUsername) {
+    if (userId == m_currentUser.id) {
+        m_currentUser.username = newUsername;
+        emit currentUsernameChanged();
+    }
+    m_userListModel->updateUsername(userId, newUsername);
+    m_messageListModel->updateUsername(userId, newUsername);
 }
 
 } // namespace qt_client

@@ -23,7 +23,8 @@ public:
         ServerList = 0,
         Servers,
         Auth,
-        Chat
+        Chat,
+        AccountSettings
     };
     Q_ENUM(Page)
 
@@ -82,6 +83,9 @@ public:
     Q_INVOKABLE void becomeMember(int roomId);
     Q_INVOKABLE void startTyping();
     Q_INVOKABLE void stopTyping();
+    Q_INVOKABLE void openAccountSettings();
+    Q_INVOKABLE void changeUsername(const QString& newUsername);
+    Q_INVOKABLE void changePassword(const QString& oldPassword, const QString& newPassword);
 
 signals:
     void currentPageChanged();
@@ -92,6 +96,11 @@ signals:
     void errorMessageChanged();
     void onlineCountChanged();
     void typingUsersChanged();
+
+    void changeUsernameSucceeded();
+    void changeUsernameFailed(const QString& error);
+    void changePasswordSucceeded();
+    void changePasswordFailed(const QString& error);
 
 private:
     void setErrorMessage(const QString& msg);
@@ -129,6 +138,13 @@ private:
     void onUserStoppedTyping(int32_t userId, const QString& username);
     void onMessageDeleted(int32_t messageId);
 
+    void onChangeUsernameSuccess();
+    void onChangeUsernameFailure(const QString& error);
+    void onGetMySaltResponse(bool success, const QString& salt);
+    void onChangePasswordSuccess();
+    void onChangePasswordFailure(const QString& error);
+    void onUsernameChanged(int32_t userId, const QString& newUsername);
+
     void onLoggedOut();
     void onWsError(const QString& msg);
     void onGenericError(const QString& msg);
@@ -144,6 +160,10 @@ private:
 
     Page m_currentPage = Page::ServerList;
     QString m_errorMessage;
+
+    // Pending password change state
+    QString m_pendingOldPassword;
+    QString m_pendingNewPassword;
 
     User m_currentUser;
     RoomData m_currentRoom;

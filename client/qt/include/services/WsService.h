@@ -40,6 +40,9 @@ public:
     void sendTypingStart();
     void sendTypingStop();
     void sendBecomeMember(int32_t roomId);
+    void sendChangeUsername(const QString& newUsername);
+    void sendGetMySalt();
+    void sendChangePassword(std::string oldHash, std::string newHash, std::string newSalt);
 
 signals:
     // Connection lifecycle
@@ -89,6 +92,14 @@ signals:
     // Logout
     void loggedOut();
 
+    // Account settings
+    void changeUsernameSuccess();
+    void changeUsernameFailure(const QString& error);
+    void getMySaltResponse(bool success, const QString& salt);
+    void changePasswordSuccess();
+    void changePasswordFailure(const QString& error);
+    void usernameChanged(int32_t userId, const QString& newUsername);
+
     // Generic
     void genericError(const QString& message);
 
@@ -126,6 +137,10 @@ private:
     void handleUserStartedTyping(const chat::Envelope& env);
     void handleUserStoppedTyping(const chat::Envelope& env);
     void handleMessageDeleted(const chat::Envelope& env);
+    void handleChangeUsernameResponse(const chat::Envelope& env);
+    void handleGetMySaltResponse(const chat::Envelope& env);
+    void handleChangePasswordResponse(const chat::Envelope& env);
+    void handleUsernameChanged(const chat::Envelope& env);
     void handleGenericError(const chat::Envelope& env);
 
     QWebSocket m_socket;

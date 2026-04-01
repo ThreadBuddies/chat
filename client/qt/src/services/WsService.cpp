@@ -128,6 +128,10 @@ void WebSocketService::handleMessage(const QByteArray& data) {
         case PC::kNewRoomName:             handleNewRoomName(env); break;
         case PC::kMessageDeleted:          handleMessageDeleted(env); break;
         case PC::kBecomeMemberResponse:    handleBecomeMemberResponse(env); break;
+        case PC::kChangeUsernameResponse:  handleChangeUsernameResponse(env); break;
+        case PC::kGetMySaltResponse:       handleGetMySaltResponse(env); break;
+        case PC::kChangePasswordResponse:  handleChangePasswordResponse(env); break;
+        case PC::kUsernameChanged:         handleUsernameChanged(env); break;
         default: qDebug() << "WebSocketService: unhandled envelope payload"; break;
     }
 }
@@ -341,6 +345,36 @@ void WebSocketService::handleMessageDeleted(const chat::Envelope& env) {
     emit messageDeleted(env.message_deleted().message_id());
 }
 
+// ============ Account settings handlers ============
+
+void WebSocketService::handleChangeUsernameResponse(const chat::Envelope& env) {
+    const auto& resp = env.change_username_response();
+    if (statusOk(resp.status()))
+        emit changeUsernameSuccess();
+    else
+        emit changeUsernameFailure(statusMsg(resp.status()));
+}
+
+void WebSocketService::handleGetMySaltResponse(const chat::Envelope& env) {
+    const auto& resp = env.get_my_salt_response();
+    bool success = statusOk(resp.status());
+    QString salt = resp.has_salt() ? QString::fromStdString(resp.salt()) : QString();
+    emit getMySaltResponse(success, salt);
+}
+
+void WebSocketService::handleChangePasswordResponse(const chat::Envelope& env) {
+    const auto& resp = env.change_password_response();
+    if (statusOk(resp.status()))
+        emit changePasswordSuccess();
+    else
+        emit changePasswordFailure(statusMsg(resp.status()));
+}
+
+void WebSocketService::handleUsernameChanged(const chat::Envelope& env) {
+    const auto& msg = env.username_changed();
+    emit usernameChanged(msg.user_id(), QString::fromStdString(msg.new_username()));
+}
+
 // ============ Error handlers ============
 
 void WebSocketService::handleGenericError(const chat::Envelope& env) {
@@ -431,6 +465,27 @@ void WebSocketService::sendTypingStop() {
 void WebSocketService::sendBecomeMember(int roomId) {
     chat::Envelope env;
     env.mutable_become_member_request()->set_room_id(roomId);
+    sendEnvelope(env);
+}
+
+void WebSocketService::sendChangeUsername(const QString& newUsername) {
+    chat::Envelope env;
+    env.mutable_change_username_request()->set_new_username(newUsername.toStdString());
+    sendEnvelope(env);
+}
+
+void WebSocketService::sendGetMySalt() {
+    chat::Envelope env;
+    env.mutable_get_my_salt_request();
+    sendEnvelope(env);
+}
+
+void WebSocketService::sendChangePassword(std::string oldHash, std::string newHash, std::string newSalt) {
+    chat::Envelope env;
+    auto* req = env.mutable_change_password_request();
+    req->set_old_password_hash(std::move(oldHash));
+    req->set_new_password_hash(std::move(newHash));
+    req->set_new_salt(std::move(newSalt));
     sendEnvelope(env);
 }
 

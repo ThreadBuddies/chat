@@ -44,6 +44,7 @@ public:
     void onMessagesReceived(const QList<MessageData>& messages);
     void clear();
     void deleteMessage(int messageId);
+    void updateUsername(int userId, const QString& newName);
 
     bool canLoadMore() const;
     bool canLoadNewer() const;

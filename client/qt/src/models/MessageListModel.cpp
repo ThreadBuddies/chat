@@ -158,6 +158,16 @@ void MessageListModel::deleteMessage(int messageId) {
     }
 }
 
+void MessageListModel::updateUsername(int userId, const QString& newName) {
+    for (int i = 0; i < m_messages.size(); ++i) {
+        if (m_messages[i].userId == userId) {
+            m_messages[i].user = newName;
+            QModelIndex idx = index(i, 0);
+            emit dataChanged(idx, idx, { UsernameRole });
+        }
+    }
+}
+
 void MessageListModel::setCanLoadMore(bool value) {
     if (m_canLoadMore != value) {
         m_canLoadMore = value;

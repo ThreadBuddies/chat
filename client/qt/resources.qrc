@@ -5,6 +5,9 @@
         <file>qml/pages/ServersPage.qml</file>
         <file>qml/pages/AuthPage.qml</file>
         <file>qml/pages/ChatPanel.qml</file>
+        <file>qml/pages/AccountSettingsPage.qml</file>
+        <file>qml/components/qmldir</file>
         <file>qml/components/AppScrollBar.qml</file>
+        <file>qml/components/AppPalette.qml</file>
     </qresource>
 </RCC>

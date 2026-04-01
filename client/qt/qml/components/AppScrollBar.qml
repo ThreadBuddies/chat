@@ -1,13 +1,9 @@
 import QtQuick
 import QtQuick.Controls
+import "."
 
 ScrollBar {
     id: bar
-
-    property color accent
-    property color accentMid
-    property color textMuted
-    property color bgHover
 
     width: hovered ? 8 : 4
     policy: ScrollBar.AsNeeded
@@ -25,16 +21,16 @@ ScrollBar {
         implicitWidth: 6
         radius: width / 2
 
-        color: bar.pressed ? bar.accent
-              : bar.hovered ? bar.accentMid
-              : bar.textMuted
+        color: bar.pressed ? AppPalette.accent
+              : bar.hovered ? AppPalette.accentMid
+              : AppPalette.textMuted
 
         opacity: bar.hovered || bar.pressed ? 0.9 : 0.5
     }
 
     background: Rectangle {
         implicitWidth: 12
-        color: bar.hovered ? bar.bgHover : "transparent"
+        color: bar.hovered ? AppPalette.bgHover : "transparent"
         radius: 6
     }
 }

@@ -1,51 +1,76 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../components"
 
 Item {
+    Rectangle {
+        anchors.fill: parent
+        color: AppPalette.bgBase
+    }
+
     ColumnLayout {
         anchors.centerIn: parent
         width: Math.min(parent.width - 40, 500)
         spacing: 12
 
-        Label {
+        Text {
             text: "Available Servers"
             font.pixelSize: 20
-            font.bold: true
+            font.weight: Font.DemiBold
+            color: AppPalette.textPrimary
             Layout.alignment: Qt.AlignHCenter
         }
 
+        // ── Server list ───────────────────────────────────────────────────────
         Rectangle {
             Layout.fillWidth: true
             height: 300
-            border.color: "#ccc"
+            color: AppPalette.bgBase
+            border.color: AppPalette.borderColor
             border.width: 1
-            radius: 4
+            radius: 8
 
             ListView {
                 id: serversView
                 anchors.fill: parent
-                anchors.margins: 2
+                anchors.margins: 4
                 model: appController.serverListModel
                 clip: true
                 currentIndex: -1
 
                 delegate: ItemDelegate {
                     width: serversView.width
-                    text: model.host
                     highlighted: serversView.currentIndex === index
                     onClicked: serversView.currentIndex = index
+
+                    background: Rectangle {
+                        radius: 6
+                        color: parent.highlighted ? AppPalette.bgSelected
+                             : parent.hovered     ? AppPalette.bgHover
+                             : "transparent"
+                    }
+                    contentItem: Text {
+                        text: model.host
+                        font.pixelSize: 13
+                        color: AppPalette.textPrimary
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
+                    HoverHandler { cursorShape: Qt.PointingHandCursor }
                 }
 
-                Label {
+                Text {
                     anchors.centerIn: parent
                     text: "No servers available"
-                    color: "#999"
+                    color: AppPalette.textMuted
+                    font.pixelSize: 13
                     visible: serversView.count === 0
                 }
             }
         }
 
+        // ── Actions ───────────────────────────────────────────────────────────
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
@@ -54,6 +79,9 @@ Item {
                 text: "Connect"
                 enabled: serversView.currentIndex >= 0
                 Layout.fillWidth: true
+                implicitHeight: 36
+                font.pixelSize: 13
+                font.weight: Font.DemiBold
                 onClicked: {
                     var host = appController.serverListModel.data(
                         appController.serverListModel.index(serversView.currentIndex, 0),
@@ -61,11 +89,39 @@ Item {
                     )
                     appController.connectToServer(host)
                 }
+                background: Rectangle {
+                    radius: 8
+                    color: parent.enabled ? AppPalette.accent : AppPalette.bgSurfaceAlt
+                    border.color: parent.enabled ? AppPalette.accent : AppPalette.borderColor
+                    border.width: 0.5
+                }
+                contentItem: Text {
+                    text: parent.text; font: parent.font
+                    color: parent.enabled ? AppPalette.bgBase : AppPalette.textMuted
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                HoverHandler { cursorShape: Qt.PointingHandCursor }
             }
 
             Button {
                 text: "Back"
+                implicitHeight: 36
+                font.pixelSize: 13
                 onClicked: appController.goBack()
+                background: Rectangle {
+                    radius: 8
+                    color: "transparent"
+                    border.color: AppPalette.borderColor
+                    border.width: 0.5
+                }
+                contentItem: Text {
+                    text: parent.text; font: parent.font
+                    color: AppPalette.textSecondary
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                HoverHandler { cursorShape: Qt.PointingHandCursor }
             }
         }
     }
