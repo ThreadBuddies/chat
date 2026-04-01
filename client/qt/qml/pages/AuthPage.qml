@@ -27,6 +27,9 @@ Item {
             Layout.fillWidth: true
             placeholderText: "Username"
             font.pixelSize: 13
+            color: AppPalette.textPrimary
+            selectionColor: AppPalette.accent
+            selectedTextColor: AppPalette.bgBase
             onAccepted: passwordField.forceActiveFocus()
             background: Rectangle {
                 radius: 8
@@ -41,6 +44,9 @@ Item {
             Layout.fillWidth: true
             placeholderText: "Password"
             font.pixelSize: 13
+            color: AppPalette.textPrimary
+            selectionColor: AppPalette.accent
+            selectedTextColor: AppPalette.bgBase
             echoMode: TextInput.Password
             onAccepted: loginButton.clicked()
             background: Rectangle {

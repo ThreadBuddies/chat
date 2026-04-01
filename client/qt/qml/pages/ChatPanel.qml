@@ -582,6 +582,9 @@ Item {
                             Layout.fillWidth: true
                             placeholderText: "Type a message..."
                             font.pixelSize: 13
+                            color: AppPalette.textPrimary
+                            selectionColor: AppPalette.accent
+                            selectedTextColor: AppPalette.bgBase
 
                             background: Rectangle {
                                 radius: 8
@@ -730,6 +733,9 @@ Item {
                 Layout.fillWidth: true
                 placeholderText: "e.g. my-room"
                 font.pixelSize: 13
+                color: AppPalette.textPrimary
+                selectionColor: AppPalette.accent
+                selectedTextColor: AppPalette.bgBase
                 maximumLength: 64
                 onAccepted: createRoomDialog.accept()
 

@@ -80,6 +80,9 @@ Item {
                 Layout.fillWidth: true
                 placeholderText: "ws://localhost:8848"
                 font.pixelSize: 13
+                color: AppPalette.textPrimary
+                selectionColor: AppPalette.accent
+                selectedTextColor: AppPalette.bgBase
                 onAccepted: addButton.clicked()
                 background: Rectangle {
                     radius: 8

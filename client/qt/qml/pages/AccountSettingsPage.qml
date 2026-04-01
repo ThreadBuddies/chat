@@ -219,6 +219,9 @@ Item {
             Layout.fillWidth: true
             placeholderText: "New username"
             font.pixelSize: 13
+            color: AppPalette.textPrimary
+            selectionColor: AppPalette.accent
+            selectedTextColor: AppPalette.bgBase
             onAccepted: changeUsernameButton.clicked()
             background: Rectangle {
                 radius: 8
@@ -281,6 +284,9 @@ Item {
             Layout.fillWidth: true
             placeholderText: "Current password"
             font.pixelSize: 13
+            color: AppPalette.textPrimary
+            selectionColor: AppPalette.accent
+            selectedTextColor: AppPalette.bgBase
             echoMode: TextInput.Password
             onAccepted: newPasswordField.forceActiveFocus()
             background: Rectangle {
@@ -296,6 +302,9 @@ Item {
             Layout.fillWidth: true
             placeholderText: "New password"
             font.pixelSize: 13
+            color: AppPalette.textPrimary
+            selectionColor: AppPalette.accent
+            selectedTextColor: AppPalette.bgBase
             echoMode: TextInput.Password
             onAccepted: confirmPasswordField.forceActiveFocus()
             background: Rectangle {
@@ -311,6 +320,9 @@ Item {
             Layout.fillWidth: true
             placeholderText: "Confirm new password"
             font.pixelSize: 13
+            color: AppPalette.textPrimary
+            selectionColor: AppPalette.accent
+            selectedTextColor: AppPalette.bgBase
             echoMode: TextInput.Password
             onAccepted: changePasswordButton.clicked()
             background: Rectangle {
