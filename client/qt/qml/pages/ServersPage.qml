@@ -75,12 +75,11 @@ Item {
             Layout.fillWidth: true
             spacing: 8
 
-            Button {
+            StyledButton {
                 text: "Connect"
+                variant: "primary"
                 enabled: serversView.currentIndex >= 0
                 Layout.fillWidth: true
-                implicitHeight: 36
-                font.pixelSize: 13
                 font.weight: Font.DemiBold
                 onClicked: {
                     var host = appController.serverListModel.data(
@@ -89,39 +88,12 @@ Item {
                     )
                     appController.connectToServer(host)
                 }
-                background: Rectangle {
-                    radius: 8
-                    color: parent.enabled ? AppPalette.accent : AppPalette.bgSurfaceAlt
-                    border.color: parent.enabled ? AppPalette.accent : AppPalette.borderColor
-                    border.width: 0.5
-                }
-                contentItem: Text {
-                    text: parent.text; font: parent.font
-                    color: parent.enabled ? AppPalette.bgBase : AppPalette.textMuted
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                HoverHandler { cursorShape: Qt.PointingHandCursor }
             }
 
-            Button {
+            StyledButton {
                 text: "Back"
-                implicitHeight: 36
-                font.pixelSize: 13
+                variant: "tertiary"
                 onClicked: appController.goBack()
-                background: Rectangle {
-                    radius: 8
-                    color: "transparent"
-                    border.color: AppPalette.borderColor
-                    border.width: 0.5
-                }
-                contentItem: Text {
-                    text: parent.text; font: parent.font
-                    color: AppPalette.textSecondary
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                HoverHandler { cursorShape: Qt.PointingHandCursor }
             }
         }
     }

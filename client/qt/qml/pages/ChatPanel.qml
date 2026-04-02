@@ -233,26 +233,15 @@ Item {
                                     }
 
                                     // Join button — only for public rooms
-                                    Button {
+                                    StyledButton {
                                         text: "Join"
+                                        variant: "secondary"
                                         implicitHeight: 26
                                         implicitWidth: 52
                                         font.pixelSize: 11
                                         font.weight: Font.DemiBold
+                                        cornerRadius: 6
                                         onClicked: appController.becomeMember(model.roomId)
-                                        background: Rectangle {
-                                            radius: 6
-                                            color: AppPalette.accentLight
-                                            border.color: AppPalette.accent
-                                            border.width: 0.5
-                                        }
-                                        contentItem: Text {
-                                            text: parent.text
-                                            font: parent.font
-                                            color: AppPalette.accent
-                                            horizontalAlignment: Text.AlignHCenter
-                                            verticalAlignment: Text.AlignVCenter
-                                        }
                                     }
                                 }
 
@@ -289,57 +278,36 @@ Item {
                     spacing: 4
 
                     // Create room
-                    Button {
+                    StyledButton {
                         id: createRoomBtn
                         text: "+ Create room"
+                        variant: "tertiary"
+                        labelColor: AppPalette.textPrimary
                         Layout.fillWidth: true
                         implicitHeight: 34
                         font.pixelSize: 12
                         onClicked: createRoomDialog.open()
-                        background: Rectangle {
-                            radius: 8
-                            color: AppPalette.bgBase
-                            border.color: AppPalette.borderColor
-                            border.width: 0.5
-                        }
-                        contentItem: Text {
-                            text: parent.text
-                            font: parent.font
-                            color: AppPalette.textPrimary
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
                     }
 
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 4
 
-                        Button {
+                        StyledButton {
                             text: "Account"
+                            variant: "ghost"
                             Layout.fillWidth: true
                             implicitHeight: 30
                             font.pixelSize: 11
-                            background: Rectangle { radius: 8; color: parent.hovered ? AppPalette.accentLight : "transparent"; border.color: AppPalette.borderColor; border.width: 0.5 }
-                            contentItem: Text {
-                                text: parent.text; font: parent.font; color: AppPalette.textSecondary
-                                horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-                            }
                             onClicked: appController.openAccountSettings()
-                            HoverHandler { cursorShape: Qt.PointingHandCursor }
                         }
-                        Button {
+                        StyledButton {
                             text: "Logout"
+                            variant: "ghost"
                             Layout.fillWidth: true
                             implicitHeight: 30
                             font.pixelSize: 11
-                            background: Rectangle { radius: 8; color: parent.hovered ? AppPalette.accentLight : "transparent"; border.color: AppPalette.borderColor; border.width: 0.5 }
-                            contentItem: Text {
-                                text: parent.text; font: parent.font; color: AppPalette.textSecondary
-                                horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-                            }
                             onClicked: appController.logout()
-                            HoverHandler { cursorShape: Qt.PointingHandCursor }
                         }
                     }
                 }
@@ -395,19 +363,13 @@ Item {
                             font.pixelSize: 11
                             color: AppPalette.textMuted
                         }
-                        Button {
+                        StyledButton {
                             text: "Members"
+                            variant: "tertiary"
                             implicitHeight: 28
                             font.pixelSize: 11
+                            cornerRadius: 6
                             onClicked: rightSidebar.visible = !rightSidebar.visible
-                            background: Rectangle {
-                                radius: 6; color: "transparent"
-                                border.color: AppPalette.borderColor; border.width: 0.5
-                            }
-                            contentItem: Text {
-                                text: parent.text; font: parent.font; color: AppPalette.textSecondary
-                                horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-                            }
                         }
                     }
                 }
@@ -577,21 +539,10 @@ Item {
                         anchors.margins: 8
                         spacing: 8
 
-                        TextField {
+                        StyledTextField {
                             id: msgInput
                             Layout.fillWidth: true
                             placeholderText: "Type a message..."
-                            font.pixelSize: 13
-                            color: AppPalette.textPrimary
-                            selectionColor: AppPalette.accent
-                            selectedTextColor: AppPalette.bgBase
-
-                            background: Rectangle {
-                                radius: 8
-                                color: AppPalette.bgBase
-                                border.color: msgInput.activeFocus ? AppPalette.accent : AppPalette.borderColor
-                                border.width: msgInput.activeFocus ? 1.5 : 0.5
-                            }
 
                             onTextChanged: {
                                 if (text.length > 0)
@@ -612,10 +563,10 @@ Item {
                             }
                         }
 
-                        Button {
+                        StyledButton {
                             text: "Send"
+                            variant: "secondary"
                             enabled: msgInput.text.trim().length > 0
-                            implicitHeight: 36
                             implicitWidth: 64
                             font.pixelSize: 12
                             font.weight: Font.DemiBold
@@ -623,18 +574,6 @@ Item {
                                 appController.stopTyping()
                                 appController.sendMessage(msgInput.text)
                                 msgInput.clear()
-                            }
-                            background: Rectangle {
-                                radius: 8
-                                color: parent.enabled ? AppPalette.accentLight : AppPalette.bgSurfaceAlt
-                                border.color: parent.enabled ? AppPalette.accent : AppPalette.borderColor
-                                border.width: 0.5
-                            }
-                            contentItem: Text {
-                                text: parent.text; font: parent.font
-                                color: parent.enabled ? AppPalette.accent : AppPalette.textMuted
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
                             }
                         }
                     }
@@ -728,23 +667,12 @@ Item {
                 font.pixelSize: 13
                 color: AppPalette.textSecondary
             }
-            TextField {
+            StyledTextField {
                 id: newRoomField
                 Layout.fillWidth: true
                 placeholderText: "e.g. my-room"
-                font.pixelSize: 13
-                color: AppPalette.textPrimary
-                selectionColor: AppPalette.accent
-                selectedTextColor: AppPalette.bgBase
                 maximumLength: 64
                 onAccepted: createRoomDialog.accept()
-
-                background: Rectangle {
-                    radius: 8
-                    color: AppPalette.bgBase
-                    border.color: newRoomField.activeFocus ? AppPalette.accent : AppPalette.borderColor
-                    border.width: newRoomField.activeFocus ? 1.5 : 0.5
-                }
             }
         }
     }
