@@ -22,114 +22,54 @@ Item {
             Layout.alignment: Qt.AlignHCenter
         }
 
-        TextField {
+        StyledTextField {
             id: usernameField
             Layout.fillWidth: true
             placeholderText: "Username"
-            font.pixelSize: 13
-            color: AppPalette.textPrimary
-            selectionColor: AppPalette.accent
-            selectedTextColor: AppPalette.bgBase
             onAccepted: passwordField.forceActiveFocus()
-            background: Rectangle {
-                radius: 8
-                color: AppPalette.bgBase
-                border.color: usernameField.activeFocus ? AppPalette.accent : AppPalette.borderColor
-                border.width: usernameField.activeFocus ? 1.5 : 0.5
-            }
         }
 
-        TextField {
+        StyledTextField {
             id: passwordField
             Layout.fillWidth: true
             placeholderText: "Password"
-            font.pixelSize: 13
-            color: AppPalette.textPrimary
-            selectionColor: AppPalette.accent
-            selectedTextColor: AppPalette.bgBase
             echoMode: TextInput.Password
             onAccepted: loginButton.clicked()
-            background: Rectangle {
-                radius: 8
-                color: AppPalette.bgBase
-                border.color: passwordField.activeFocus ? AppPalette.accent : AppPalette.borderColor
-                border.width: passwordField.activeFocus ? 1.5 : 0.5
-            }
         }
 
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
 
-            Button {
+            StyledButton {
                 id: loginButton
                 text: "Login"
+                variant: "primary"
                 Layout.fillWidth: true
                 Layout.preferredWidth: 0
-                implicitHeight: 36
-                font.pixelSize: 13
                 font.weight: Font.DemiBold
                 enabled: usernameField.text.length > 0 && passwordField.text.length > 0
                 onClicked: appController.login(usernameField.text, passwordField.text)
-                background: Rectangle {
-                    radius: 8
-                    color: parent.enabled ? AppPalette.accent : AppPalette.bgSurfaceAlt
-                    border.color: parent.enabled ? AppPalette.accent : AppPalette.borderColor
-                    border.width: 0.5
-                }
-                contentItem: Text {
-                    text: parent.text; font: parent.font
-                    color: parent.enabled ? AppPalette.bgBase : AppPalette.textMuted
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                HoverHandler { cursorShape: Qt.PointingHandCursor }
             }
 
-            Button {
+            StyledButton {
                 text: "Register"
+                variant: "secondary"
                 Layout.fillWidth: true
                 Layout.preferredWidth: 0
-                implicitHeight: 36
-                font.pixelSize: 13
                 font.weight: Font.DemiBold
                 enabled: usernameField.text.length > 0 && passwordField.text.length > 0
                 onClicked: appController.registerUser(usernameField.text, passwordField.text)
-                background: Rectangle {
-                    radius: 8
-                    color: parent.enabled ? AppPalette.accentLight : AppPalette.bgSurfaceAlt
-                    border.color: parent.enabled ? AppPalette.accent : AppPalette.borderColor
-                    border.width: 0.5
-                }
-                contentItem: Text {
-                    text: parent.text; font: parent.font
-                    color: parent.enabled ? AppPalette.accent : AppPalette.textMuted
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-                HoverHandler { cursorShape: Qt.PointingHandCursor }
             }
         }
 
-        Button {
+        StyledButton {
             text: "Back"
+            variant: "tertiary"
             Layout.alignment: Qt.AlignHCenter
             implicitHeight: 32
             font.pixelSize: 12
             onClicked: appController.goBack()
-            background: Rectangle {
-                radius: 8
-                color: "transparent"
-                border.color: AppPalette.borderColor
-                border.width: 0.5
-            }
-            contentItem: Text {
-                text: parent.text; font: parent.font
-                color: AppPalette.textSecondary
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-            HoverHandler { cursorShape: Qt.PointingHandCursor }
         }
     }
 }

@@ -9,5 +9,7 @@
         <file>qml/components/qmldir</file>
         <file>qml/components/AppScrollBar.qml</file>
         <file>qml/components/AppPalette.qml</file>
+        <file>qml/components/StyledButton.qml</file>
+        <file>qml/components/StyledTextField.qml</file>
     </qresource>
 </RCC>

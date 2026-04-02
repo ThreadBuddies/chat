@@ -78,51 +78,25 @@ Item {
                 spacing: 8
                 Layout.fillWidth: true
 
-                Button {
+                StyledButton {
                     text: "Cancel"
+                    variant: "tertiary"
                     Layout.fillWidth: true
                     implicitHeight: 34
-                    font.pixelSize: 13
                     onClicked: confirmDialog.close()
-                    background: Rectangle {
-                        radius: 8
-                        color: "transparent"
-                        border.color: AppPalette.borderColor
-                        border.width: 0.5
-                    }
-                    contentItem: Text {
-                        text: parent.text; font: parent.font
-                        color: AppPalette.textSecondary
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    HoverHandler { cursorShape: Qt.PointingHandCursor }
                 }
 
-                Button {
+                StyledButton {
                     text: "Confirm"
+                    variant: "primary"
                     Layout.fillWidth: true
                     implicitHeight: 34
-                    font.pixelSize: 13
                     font.weight: Font.DemiBold
                     onClicked: {
                         if (confirmDialog.pendingAction)
                             confirmDialog.pendingAction()
                         confirmDialog.close()
                     }
-                    background: Rectangle {
-                        radius: 8
-                        color: AppPalette.accent
-                        border.color: AppPalette.accent
-                        border.width: 0.5
-                    }
-                    contentItem: Text {
-                        text: parent.text; font: parent.font
-                        color: AppPalette.bgBase
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    HoverHandler { cursorShape: Qt.PointingHandCursor }
                 }
             }
         }
@@ -214,29 +188,18 @@ Item {
             color: AppPalette.textPrimary
         }
 
-        TextField {
+        StyledTextField {
             id: newUsernameField
             Layout.fillWidth: true
             placeholderText: "New username"
-            font.pixelSize: 13
-            color: AppPalette.textPrimary
-            selectionColor: AppPalette.accent
-            selectedTextColor: AppPalette.bgBase
             onAccepted: changeUsernameButton.clicked()
-            background: Rectangle {
-                radius: 8
-                color: AppPalette.bgBase
-                border.color: newUsernameField.activeFocus ? AppPalette.accent : AppPalette.borderColor
-                border.width: newUsernameField.activeFocus ? 1.5 : 0.5
-            }
         }
 
-        Button {
+        StyledButton {
             id: changeUsernameButton
             text: "Change Username"
+            variant: "secondary"
             Layout.fillWidth: true
-            implicitHeight: 36
-            font.pixelSize: 13
             font.weight: Font.DemiBold
             enabled: newUsernameField.text.length > 0 && !busy
             onClicked: {
@@ -249,19 +212,6 @@ Item {
                     }
                 )
             }
-            background: Rectangle {
-                radius: 8
-                color: parent.enabled ? AppPalette.accentLight : AppPalette.bgSurfaceAlt
-                border.color: parent.enabled ? AppPalette.accent : AppPalette.borderColor
-                border.width: 0.5
-            }
-            contentItem: Text {
-                text: parent.text; font: parent.font
-                color: parent.enabled ? AppPalette.accent : AppPalette.textMuted
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-            HoverHandler { cursorShape: Qt.PointingHandCursor }
         }
 
         // ── Change Password ───────────────────────────────────────────────────
@@ -279,66 +229,35 @@ Item {
             color: AppPalette.textPrimary
         }
 
-        TextField {
+        StyledTextField {
             id: oldPasswordField
             Layout.fillWidth: true
             placeholderText: "Current password"
-            font.pixelSize: 13
-            color: AppPalette.textPrimary
-            selectionColor: AppPalette.accent
-            selectedTextColor: AppPalette.bgBase
             echoMode: TextInput.Password
             onAccepted: newPasswordField.forceActiveFocus()
-            background: Rectangle {
-                radius: 8
-                color: AppPalette.bgBase
-                border.color: oldPasswordField.activeFocus ? AppPalette.accent : AppPalette.borderColor
-                border.width: oldPasswordField.activeFocus ? 1.5 : 0.5
-            }
         }
 
-        TextField {
+        StyledTextField {
             id: newPasswordField
             Layout.fillWidth: true
             placeholderText: "New password"
-            font.pixelSize: 13
-            color: AppPalette.textPrimary
-            selectionColor: AppPalette.accent
-            selectedTextColor: AppPalette.bgBase
             echoMode: TextInput.Password
             onAccepted: confirmPasswordField.forceActiveFocus()
-            background: Rectangle {
-                radius: 8
-                color: AppPalette.bgBase
-                border.color: newPasswordField.activeFocus ? AppPalette.accent : AppPalette.borderColor
-                border.width: newPasswordField.activeFocus ? 1.5 : 0.5
-            }
         }
 
-        TextField {
+        StyledTextField {
             id: confirmPasswordField
             Layout.fillWidth: true
             placeholderText: "Confirm new password"
-            font.pixelSize: 13
-            color: AppPalette.textPrimary
-            selectionColor: AppPalette.accent
-            selectedTextColor: AppPalette.bgBase
             echoMode: TextInput.Password
             onAccepted: changePasswordButton.clicked()
-            background: Rectangle {
-                radius: 8
-                color: AppPalette.bgBase
-                border.color: confirmPasswordField.activeFocus ? AppPalette.accent : AppPalette.borderColor
-                border.width: confirmPasswordField.activeFocus ? 1.5 : 0.5
-            }
         }
 
-        Button {
+        StyledButton {
             id: changePasswordButton
             text: "Change Password"
+            variant: "secondary"
             Layout.fillWidth: true
-            implicitHeight: 36
-            font.pixelSize: 13
             font.weight: Font.DemiBold
             enabled: oldPasswordField.text.length > 0
                      && newPasswordField.text.length > 0
@@ -359,42 +278,17 @@ Item {
                     }
                 )
             }
-            background: Rectangle {
-                radius: 8
-                color: parent.enabled ? AppPalette.accentLight : AppPalette.bgSurfaceAlt
-                border.color: parent.enabled ? AppPalette.accent : AppPalette.borderColor
-                border.width: 0.5
-            }
-            contentItem: Text {
-                text: parent.text; font: parent.font
-                color: parent.enabled ? AppPalette.accent : AppPalette.textMuted
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-            HoverHandler { cursorShape: Qt.PointingHandCursor }
         }
 
         // ── Back ──────────────────────────────────────────────────────────────
-        Button {
+        StyledButton {
             text: "Back"
+            variant: "tertiary"
             Layout.alignment: Qt.AlignHCenter
             implicitHeight: 32
             font.pixelSize: 12
             enabled: !busy
             onClicked: appController.goBack()
-            background: Rectangle {
-                radius: 8
-                color: "transparent"
-                border.color: AppPalette.borderColor
-                border.width: 0.5
-            }
-            contentItem: Text {
-                text: parent.text; font: parent.font
-                color: AppPalette.textSecondary
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-            HoverHandler { cursorShape: Qt.PointingHandCursor }
         }
     }
 }
