@@ -23,8 +23,14 @@ AppController::AppController(ConfigService* configService,
 {
     m_localTypingTimer.setSingleShot(true);
     connect(&m_localTypingTimer, &QTimer::timeout, this, [this]() {
+        m_typingRefreshTimer.stop();
         m_isTyping = false;
         m_ws->sendTypingStop();
+    });
+
+    m_typingRefreshTimer.setInterval(3000);
+    connect(&m_typingRefreshTimer, &QTimer::timeout, this, [this]() {
+        m_ws->sendTypingStart();
     });
 
     connectSignals();
@@ -95,6 +101,7 @@ void AppController::clearTypingState() {
 
     // Local typing state
     m_localTypingTimer.stop();
+    m_typingRefreshTimer.stop();
     m_isTyping = false;
 }
 
@@ -629,12 +636,14 @@ void AppController::startTyping() {
     if (!m_isTyping) {
         m_isTyping = true;
         m_ws->sendTypingStart();
+        m_typingRefreshTimer.start();
     }
     m_localTypingTimer.start(2000);
 }
 
 void AppController::stopTyping() {
     m_localTypingTimer.stop();
+    m_typingRefreshTimer.stop();
     if (m_isTyping) {
         m_isTyping = false;
         m_ws->sendTypingStop();

@@ -134,6 +134,8 @@ void WebSocketService::handleMessage(const QByteArray& data) {
         case PC::kUsernameChanged:         handleUsernameChanged(env); break;
         case PC::kAssignRoleResponse:      handleAssignRoleResponse(env); break;
         case PC::kUserRoleChanged:         handleUserRoleChanged(env); break;
+        case PC::kUserTypingStartResponse: handleUserTypingStartResponse(env); break;
+        case PC::kUserTypingStopResponse:  handleUserTypingStopResponse(env); break;
         default: qDebug() << "WebSocketService: unhandled envelope payload"; break;
     }
 }
@@ -375,6 +377,18 @@ void WebSocketService::handleChangePasswordResponse(const chat::Envelope& env) {
 void WebSocketService::handleUsernameChanged(const chat::Envelope& env) {
     const auto& msg = env.username_changed();
     emit usernameChanged(msg.user_id(), QString::fromStdString(msg.new_username()));
+}
+
+// ============ Typing response handlers ============
+
+void WebSocketService::handleUserTypingStartResponse(const chat::Envelope& env) {
+    if (!statusOk(env.user_typing_start_response().status()))
+        emit error(statusMsg(env.user_typing_start_response().status()));
+}
+
+void WebSocketService::handleUserTypingStopResponse(const chat::Envelope& env) {
+    if (!statusOk(env.user_typing_stop_response().status()))
+        emit error(statusMsg(env.user_typing_stop_response().status()));
 }
 
 // ============ Role handlers ============

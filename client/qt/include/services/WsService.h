@@ -143,6 +143,8 @@ private:
     void handleGetMySaltResponse(const chat::Envelope& env);
     void handleChangePasswordResponse(const chat::Envelope& env);
     void handleUsernameChanged(const chat::Envelope& env);
+    void handleUserTypingStartResponse(const chat::Envelope& env);
+    void handleUserTypingStopResponse(const chat::Envelope& env);
     void handleAssignRoleResponse(const chat::Envelope& env);
     void handleUserRoleChanged(const chat::Envelope& env);
     void handleGenericError(const chat::Envelope& env);

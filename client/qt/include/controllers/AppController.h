@@ -190,7 +190,8 @@ private:
 
     // Local typing state
     bool m_isTyping = false;
-    QTimer m_localTypingTimer;
+    QTimer m_localTypingTimer;    // debounce: sends TypingStop 2s after last keystroke
+    QTimer m_typingRefreshTimer;  // interval: re-sends TypingStart every 3s while typing
 };
 
 } // namespace qt_client
