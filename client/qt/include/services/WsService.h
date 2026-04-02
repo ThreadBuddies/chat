@@ -43,6 +43,7 @@ public:
     void sendChangeUsername(const QString& newUsername);
     void sendGetMySalt();
     void sendChangePassword(std::string oldHash, std::string newHash, std::string newSalt);
+    void sendAssignRole(int32_t roomId, int32_t userId, chat::UserRights role);
 
 signals:
     // Connection lifecycle
@@ -85,6 +86,7 @@ signals:
     void userLeft(int32_t userId, const QString& username);
     void userStartedTyping(int32_t userId, const QString& username);
     void userStoppedTyping(int32_t userId, const QString& username);
+    void userRoleChanged(int32_t userId, chat::UserRights newRole);
 
     // Messages
     void messageDeleted(int32_t messageId);
@@ -141,6 +143,8 @@ private:
     void handleGetMySaltResponse(const chat::Envelope& env);
     void handleChangePasswordResponse(const chat::Envelope& env);
     void handleUsernameChanged(const chat::Envelope& env);
+    void handleAssignRoleResponse(const chat::Envelope& env);
+    void handleUserRoleChanged(const chat::Envelope& env);
     void handleGenericError(const chat::Envelope& env);
 
     QWebSocket m_socket;

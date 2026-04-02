@@ -33,6 +33,7 @@ public:
     Q_PROPERTY(int currentUserId READ currentUserId NOTIFY currentUserIdChanged)
     Q_PROPERTY(QString currentRoomName READ currentRoomName NOTIFY currentRoomNameChanged)
     Q_PROPERTY(int currentRoomId READ currentRoomId NOTIFY currentRoomIdChanged)
+    Q_PROPERTY(int currentUserRoomRole READ currentUserRoomRole NOTIFY currentUserRoomRoleChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
     Q_PROPERTY(int onlineCount READ onlineCount NOTIFY onlineCountChanged)
     Q_PROPERTY(QString typingUsers READ typingUsers NOTIFY typingUsersChanged)
@@ -53,6 +54,7 @@ public:
     int32_t currentUserId() const;
     QString currentRoomName() const;
     int32_t currentRoomId() const;
+    int currentUserRoomRole() const;
     QString errorMessage() const;
     int onlineCount() const;
     QString typingUsers() const;
@@ -86,6 +88,7 @@ public:
     Q_INVOKABLE void openAccountSettings();
     Q_INVOKABLE void changeUsername(const QString& newUsername);
     Q_INVOKABLE void changePassword(const QString& oldPassword, const QString& newPassword);
+    Q_INVOKABLE void assignRole(int userId, int newRole);
 
 signals:
     void currentPageChanged();
@@ -97,6 +100,7 @@ signals:
     void onlineCountChanged();
     void typingUsersChanged();
 
+    void currentUserRoomRoleChanged();
     void changeUsernameSucceeded();
     void changeUsernameFailed(const QString& error);
     void changePasswordSucceeded();
@@ -144,6 +148,7 @@ private:
     void onChangePasswordSuccess();
     void onChangePasswordFailure(const QString& error);
     void onUsernameChanged(int32_t userId, const QString& newUsername);
+    void onUserRoleChanged(int32_t userId, chat::UserRights newRole);
 
     void onLoggedOut();
     void onWsError(const QString& msg);

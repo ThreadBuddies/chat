@@ -39,6 +39,8 @@ QString AppController::currentRoomName() const { return m_currentRoom.name; }
 int32_t AppController::currentRoomId() const { return m_currentRoom.id; }
 QString AppController::errorMessage() const { return m_errorMessage; }
 
+int AppController::currentUserRoomRole() const { return static_cast<int>(m_currentUser.role); }
+
 int AppController::onlineCount() const {
     return m_userListModel->onlineCount();
 }
@@ -161,6 +163,10 @@ void AppController::connectSignals() {
             this, &AppController::onUserStartedTyping);
     connect(m_ws, &WebSocketService::userStoppedTyping,
             this, &AppController::onUserStoppedTyping);
+
+    // Role management
+    connect(m_ws, &WebSocketService::userRoleChanged,
+            this, &AppController::onUserRoleChanged);
 
     // Account settings
     connect(m_ws, &WebSocketService::changeUsernameSuccess,
@@ -314,6 +320,15 @@ void AppController::onRoomDeleted(int32_t roomId) {
 
 void AppController::onJoinedRoom(QList<User> allUsers, QList<User> activeUsers) {
     m_optimisticMemberRoomId = -1;
+
+    for (const auto& u : allUsers) {
+        if (u.id == m_currentUser.id) {
+            m_currentUser.role = u.role;
+            emit currentUserRoomRoleChanged();
+            break;
+        }
+    }
+
     m_userListModel->setUsers(std::move(allUsers));
     for (const auto& user : activeUsers) {
         m_userListModel->addUser(user);
@@ -426,8 +441,10 @@ void AppController::onUserStoppedTyping(int32_t userId, const QString& username)
 void AppController::resetSessionState() {
     m_currentUser.username.clear();
     m_currentUser.id = -1;
+    m_currentUser.role = chat::UserRights::REGULAR;
     emit currentUsernameChanged();
     emit currentUserIdChanged();
+    emit currentUserRoomRoleChanged();
     m_currentRoom.id = -1;
     m_currentRoom.name.clear();
     emit currentRoomIdChanged();
@@ -707,6 +724,20 @@ void AppController::onUsernameChanged(int32_t userId, const QString& newUsername
     }
     m_userListModel->updateUsername(userId, newUsername);
     m_messageListModel->updateUsername(userId, newUsername);
+}
+
+// ============ Role management ============
+
+void AppController::assignRole(int userId, int newRole) {
+    m_ws->sendAssignRole(m_currentRoom.id, userId, static_cast<chat::UserRights>(newRole));
+}
+
+void AppController::onUserRoleChanged(int32_t userId, chat::UserRights newRole) {
+    m_userListModel->updateRole(userId, newRole);
+    if (userId == m_currentUser.id) {
+        m_currentUser.role = newRole;
+        emit currentUserRoomRoleChanged();
+    }
 }
 
 } // namespace qt_client
