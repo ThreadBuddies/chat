@@ -4,6 +4,7 @@
 #include <QString>
 #include <QMap>
 #include <QTimer>
+#include <optional>
 
 #include <services/WsService.h>
 #include <services/ConfigService.h>
@@ -170,8 +171,8 @@ private:
     QString m_pendingOldPassword;
     QString m_pendingNewPassword;
 
-    User m_currentUser;
-    RoomData m_currentRoom;
+    std::optional<User> m_currentUser;
+    std::optional<RoomData> m_currentRoom;
 
     // Auth flow state
     struct PendingAuth {

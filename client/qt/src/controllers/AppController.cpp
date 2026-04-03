@@ -8,6 +8,12 @@
 #include <utils/TextUtil.h>
 #include <QtConcurrent>
 
+namespace {
+    constexpr int LOCAL_TYPING_DEBOUNCE_MS   = 2000;
+    constexpr int TYPING_REFRESH_INTERVAL_MS = 3000;
+    constexpr int REMOTE_TYPING_EXPIRY_MS    = 5000;
+} // namespace
+
 namespace qt_client {
 
 AppController::AppController(ConfigService* configService,
@@ -28,7 +34,7 @@ AppController::AppController(ConfigService* configService,
         m_ws->sendTypingStop();
     });
 
-    m_typingRefreshTimer.setInterval(3000);
+    m_typingRefreshTimer.setInterval(TYPING_REFRESH_INTERVAL_MS);
     connect(&m_typingRefreshTimer, &QTimer::timeout, this, [this]() {
         m_ws->sendTypingStart();
     });
@@ -39,13 +45,13 @@ AppController::AppController(ConfigService* configService,
 // --- Property getters ---
 
 AppController::Page AppController::currentPage() const { return m_currentPage; }
-QString AppController::currentUsername() const { return m_currentUser.username; }
-int32_t AppController::currentUserId() const{ return m_currentUser.id; }
-QString AppController::currentRoomName() const { return m_currentRoom.name; }
-int32_t AppController::currentRoomId() const { return m_currentRoom.id; }
+QString AppController::currentUsername() const { return m_currentUser ? m_currentUser->username : QString{}; }
+int32_t AppController::currentUserId() const { return m_currentUser ? m_currentUser->id : -1; }
+QString AppController::currentRoomName() const { return m_currentRoom ? m_currentRoom->name : QString{}; }
+int32_t AppController::currentRoomId() const { return m_currentRoom ? m_currentRoom->id : -1; }
 QString AppController::errorMessage() const { return m_errorMessage; }
 
-int AppController::currentUserRoomRole() const { return static_cast<int>(m_currentUser.role); }
+int AppController::currentUserRoomRole() const { return m_currentUser ? static_cast<int>(m_currentUser->role) : 0; }
 
 int AppController::onlineCount() const {
     return m_userListModel->onlineCount();
@@ -315,9 +321,8 @@ void AppController::onRegisterFailure(const QString& err) {
 
 void AppController::onRoomDeleted(int32_t roomId) {
     m_roomListModel->removeRoom(roomId);
-    if (m_currentRoom.id == roomId) {
-        m_currentRoom.id = -1;
-        m_currentRoom.name.clear();
+    if (m_currentRoom && m_currentRoom->id == roomId) {
+        m_currentRoom = std::nullopt;
         emit currentRoomIdChanged();
         emit currentRoomNameChanged();
         m_messageListModel->clear();
@@ -329,8 +334,8 @@ void AppController::onJoinedRoom(QList<User> allUsers, QList<User> activeUsers) 
     m_optimisticMemberRoomId = -1;
 
     for (const auto& u : allUsers) {
-        if (u.id == m_currentUser.id) {
-            m_currentUser.role = u.role;
+        if (m_currentUser && u.id == m_currentUser->id) {
+            m_currentUser->role = u.role;
             emit currentUserRoomRoleChanged();
             break;
         }
@@ -346,8 +351,7 @@ void AppController::onJoinedRoom(QList<User> allUsers, QList<User> activeUsers) 
 
 void AppController::onJoinRoomFailed(const QString& err) {
     m_optimisticMemberRoomId = -1;
-    m_currentRoom.id = -1;
-    m_currentRoom.name.clear();
+    m_currentRoom = std::nullopt;
     emit currentRoomIdChanged();
     emit currentRoomNameChanged();
     m_messageListModel->clear();
@@ -366,15 +370,15 @@ void AppController::onBecameMember() {
 
 void AppController::onNewRoomCreated(const RoomData& room, int32_t ownerId) {
     m_roomListModel->addRoom(room);
-    if (m_currentUser.id == ownerId) {
+    if (m_currentUser && m_currentUser->id == ownerId) {
         becomeMember(room.id);
     }
 }
 
 void AppController::onRoomRenamed(int32_t roomId, const QString& newName) {
     m_roomListModel->renameRoom(roomId, newName);
-    if (m_currentRoom.id == roomId) {
-        m_currentRoom.name = newName;
+    if (m_currentRoom && m_currentRoom->id == roomId) {
+        m_currentRoom->name = newName;
         emit currentRoomNameChanged();
     }
 }
@@ -407,14 +411,14 @@ void AppController::onMessageDeleted(int32_t messageId) {
 // ============ Typing handlers ============
 
 void AppController::onUserStartedTyping(int32_t userId, const QString& username) {
-    if (userId == m_currentUser.id)
+    if (m_currentUser && userId == m_currentUser->id)
         return;
 
     m_typingUsers[userId] = username;
 
-    // Start/restart 5s expiry timer
+    // Start/restart expiry timer
     if (m_typingTimers.contains(userId)) {
-        m_typingTimers[userId]->start(5000);
+        m_typingTimers[userId]->start(REMOTE_TYPING_EXPIRY_MS);
     } else {
         auto* timer = new QTimer(this);
         timer->setSingleShot(true);
@@ -425,7 +429,7 @@ void AppController::onUserStartedTyping(int32_t userId, const QString& username)
             emit typingUsersChanged();
         });
         m_typingTimers[userId] = timer;
-        timer->start(5000);
+        timer->start(REMOTE_TYPING_EXPIRY_MS);
     }
 
     emit typingUsersChanged();
@@ -446,14 +450,11 @@ void AppController::onUserStoppedTyping(int32_t userId, const QString& username)
 // ============ Lifecycle handlers ============
 
 void AppController::resetSessionState() {
-    m_currentUser.username.clear();
-    m_currentUser.id = -1;
-    m_currentUser.role = chat::UserRights::REGULAR;
+    m_currentUser = std::nullopt;
     emit currentUsernameChanged();
     emit currentUserIdChanged();
     emit currentUserRoomRoleChanged();
-    m_currentRoom.id = -1;
-    m_currentRoom.name.clear();
+    m_currentRoom = std::nullopt;
     emit currentRoomIdChanged();
     emit currentRoomNameChanged();
     m_pendingAuth.clear();
@@ -539,14 +540,15 @@ void AppController::joinRoom(int32_t roomId) {
     m_messageListModel->clear();
 
     // Find room name from model
+    QString roomName;
     for (int32_t i = 0; i < m_roomListModel->rowCount(); ++i) {
         QModelIndex idx = m_roomListModel->index(i);
         if (m_roomListModel->data(idx, RoomListModel::RoomIdRole).toInt() == roomId) {
-            m_currentRoom.name = m_roomListModel->data(idx, RoomListModel::RoomNameRole).toString();
+            roomName = m_roomListModel->data(idx, RoomListModel::RoomNameRole).toString();
             break;
         }
     }
-    m_currentRoom.id = roomId;
+    m_currentRoom = RoomData{roomId, roomName, true};
     emit currentRoomIdChanged();
     emit currentRoomNameChanged();
 
@@ -638,7 +640,7 @@ void AppController::startTyping() {
         m_ws->sendTypingStart();
         m_typingRefreshTimer.start();
     }
-    m_localTypingTimer.start(2000);
+    m_localTypingTimer.start(LOCAL_TYPING_DEBOUNCE_MS);
 }
 
 void AppController::stopTyping() {
@@ -662,7 +664,7 @@ void AppController::changeUsername(const QString& newUsername) {
         emit changeUsernameFailed("Username must consist of at least 1 non-special character");
         return;
     }
-    if (sanitized == m_currentUser.username) {
+    if (m_currentUser && sanitized == m_currentUser->username) {
         emit changeUsernameFailed("The new username is the same as the current one");
         return;
     }
@@ -727,8 +729,8 @@ void AppController::onChangePasswordFailure(const QString& error) {
 }
 
 void AppController::onUsernameChanged(int32_t userId, const QString& newUsername) {
-    if (userId == m_currentUser.id) {
-        m_currentUser.username = newUsername;
+    if (m_currentUser && userId == m_currentUser->id) {
+        m_currentUser->username = newUsername;
         emit currentUsernameChanged();
     }
     m_userListModel->updateUsername(userId, newUsername);
@@ -738,13 +740,15 @@ void AppController::onUsernameChanged(int32_t userId, const QString& newUsername
 // ============ Role management ============
 
 void AppController::assignRole(int userId, int newRole) {
-    m_ws->sendAssignRole(m_currentRoom.id, userId, static_cast<chat::UserRights>(newRole));
+    if (!m_currentRoom)
+        return;
+    m_ws->sendAssignRole(m_currentRoom->id, userId, static_cast<chat::UserRights>(newRole));
 }
 
 void AppController::onUserRoleChanged(int32_t userId, chat::UserRights newRole) {
     m_userListModel->updateRole(userId, newRole);
-    if (userId == m_currentUser.id) {
-        m_currentUser.role = newRole;
+    if (m_currentUser && userId == m_currentUser->id) {
+        m_currentUser->role = newRole;
         emit currentUserRoomRoleChanged();
     }
 }
