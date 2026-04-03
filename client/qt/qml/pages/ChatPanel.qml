@@ -667,12 +667,23 @@ Item {
                     clip: true
                     spacing: 2
 
+                    property int contextMenuTargetId: -1
+
                     delegate: Item {
                         width: membersView.width
                         height: 24
 
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 4
+                            color: AppPalette.bgSelected
+                            visible: model.userId === membersView.contextMenuTargetId
+                        }
+
                         RowLayout {
                             anchors.fill: parent
+                            anchors.leftMargin: 4
+                            anchors.rightMargin: 4
                             spacing: 6
 
                             Rectangle {
@@ -706,6 +717,7 @@ Item {
                                 if (targetId === appController.currentUserId) return
                                 if (myRole <= 1) return
                                 if (targetRole >= myRole) return
+                                membersView.contextMenuTargetId = targetId
                                 userContextMenu.targetUserId = targetId
                                 userContextMenu.targetUserRole = targetRole
                                 userContextMenu.popup()
@@ -718,6 +730,8 @@ Item {
                     id: userContextMenu
                     property int targetUserId: -1
                     property int targetUserRole: 0
+
+                    onClosed: membersView.contextMenuTargetId = -1
 
                     MenuItem {
                         // visible for REGULAR target → assign; MODERATOR target → unassign
