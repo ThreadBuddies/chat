@@ -29,7 +29,7 @@ jobs:
         os: [ubuntu-24.04, macos-15-intel, windows-2025]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
 
@@ -48,7 +48,7 @@ jobs:
 
       - name: Cache Homebrew (macOS)
         if: runner.os == 'macOS'
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/Library/Caches/Homebrew
           key: ${{ runner.os }}-brew-mono
@@ -121,7 +121,7 @@ jobs:
       - name: Generate SLSA Attestation for binaries
         if: github.ref_type == 'tag'
         id: slsa
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             build/*.dmg
@@ -143,14 +143,14 @@ jobs:
           fi
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-packages-${{ matrix.os }}
           path: upload_dir/
 
       - name: Log in to GitHub Container Registry
         if: runner.os == 'Linux'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -187,7 +187,7 @@ jobs:
       - name: Build and push Server Docker image
         if: runner.os == 'Linux'
         id: build_server_image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: docker_contexts/server
           file: ./Dockerfile.server
@@ -196,7 +196,7 @@ jobs:
 
       - name: Attest Server Docker image
         if: runner.os == 'Linux' && github.ref_type == 'tag'
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/${{ steps.docker_meta.outputs.repo_lc }}-server
           subject-digest: ${{ steps.build_server_image.outputs.digest }}
@@ -205,7 +205,7 @@ jobs:
       - name: Build and push Aggregator Docker image
         if: runner.os == 'Linux'
         id: build_aggregator_image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: docker_contexts/aggregator
           file: ./Dockerfile.aggregator
@@ -214,7 +214,7 @@ jobs:
 
       - name: Attest Aggregator Docker image
         if: runner.os == 'Linux' && github.ref_type == 'tag'
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/${{ steps.docker_meta.outputs.repo_lc }}-aggregator
           subject-digest: ${{ steps.build_aggregator_image.outputs.digest }}
@@ -226,7 +226,7 @@ jobs:
 
       - name: Upload Pages artifact
         if: runner.os == 'Linux'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: 'docs/html'
 
@@ -243,7 +243,7 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   create-release:
     needs: build
@@ -252,10 +252,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download all build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts/
           pattern: release-packages-*
