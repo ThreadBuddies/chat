@@ -132,6 +132,10 @@ void WebSocketService::handleMessage(const QByteArray& data) {
         case PC::kGetMySaltResponse:       handleGetMySaltResponse(env); break;
         case PC::kChangePasswordResponse:  handleChangePasswordResponse(env); break;
         case PC::kUsernameChanged:         handleUsernameChanged(env); break;
+        case PC::kAssignRoleResponse:      handleAssignRoleResponse(env); break;
+        case PC::kUserRoleChanged:         handleUserRoleChanged(env); break;
+        case PC::kUserTypingStartResponse: handleUserTypingStartResponse(env); break;
+        case PC::kUserTypingStopResponse:  handleUserTypingStopResponse(env); break;
         default: qDebug() << "WebSocketService: unhandled envelope payload"; break;
     }
 }
@@ -375,6 +379,31 @@ void WebSocketService::handleUsernameChanged(const chat::Envelope& env) {
     emit usernameChanged(msg.user_id(), QString::fromStdString(msg.new_username()));
 }
 
+// ============ Typing response handlers ============
+
+void WebSocketService::handleUserTypingStartResponse(const chat::Envelope& env) {
+    if (!statusOk(env.user_typing_start_response().status()))
+        emit error(statusMsg(env.user_typing_start_response().status()));
+}
+
+void WebSocketService::handleUserTypingStopResponse(const chat::Envelope& env) {
+    if (!statusOk(env.user_typing_stop_response().status()))
+        emit error(statusMsg(env.user_typing_stop_response().status()));
+}
+
+// ============ Role handlers ============
+
+void WebSocketService::handleAssignRoleResponse(const chat::Envelope& env) {
+    const auto& resp = env.assign_role_response();
+    if (!statusOk(resp.status()))
+        emit error(statusMsg(resp.status()));
+}
+
+void WebSocketService::handleUserRoleChanged(const chat::Envelope& env) {
+    const auto& msg = env.user_role_changed();
+    emit userRoleChanged(msg.user_id(), msg.new_role());
+}
+
 // ============ Error handlers ============
 
 void WebSocketService::handleGenericError(const chat::Envelope& env) {
@@ -486,6 +515,15 @@ void WebSocketService::sendChangePassword(std::string oldHash, std::string newHa
     req->set_old_password_hash(std::move(oldHash));
     req->set_new_password_hash(std::move(newHash));
     req->set_new_salt(std::move(newSalt));
+    sendEnvelope(env);
+}
+
+void WebSocketService::sendAssignRole(int32_t roomId, int32_t userId, chat::UserRights role) {
+    chat::Envelope env;
+    auto* req = env.mutable_assign_role_request();
+    req->set_room_id(roomId);
+    req->set_user_id(userId);
+    req->set_new_role(role);
     sendEnvelope(env);
 }
 

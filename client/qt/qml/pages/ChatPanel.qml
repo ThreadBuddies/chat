@@ -606,12 +606,23 @@ Item {
                     clip: true
                     spacing: 2
 
+                    property int contextMenuTargetId: -1
+
                     delegate: Item {
                         width: membersView.width
                         height: 24
 
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 4
+                            color: AppPalette.bgSelected
+                            visible: model.userId === membersView.contextMenuTargetId
+                        }
+
                         RowLayout {
                             anchors.fill: parent
+                            anchors.leftMargin: 4
+                            anchors.rightMargin: 4
                             spacing: 6
 
                             Rectangle {
@@ -632,9 +643,76 @@ Item {
                                 color: rightsColor(model.userRights)
                             }
                         }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.RightButton
+                            onClicked: function(mouse) {
+                                var myRole = appController.currentUserRoomRole
+                                var targetRole = model.userRights
+                                var targetId = model.userId
+                                // No self-management, no managing peers/superiors,
+                                // only OWNER(2)+ can take role actions
+                                if (targetId === appController.currentUserId) return
+                                if (myRole <= 1) return
+                                if (targetRole >= myRole) return
+                                membersView.contextMenuTargetId = targetId
+                                userContextMenu.targetUserId = targetId
+                                userContextMenu.targetUserRole = targetRole
+                                userContextMenu.popup()
+                            }
+                        }
+                    }
+                }
+
+                Menu {
+                    id: userContextMenu
+                    property int targetUserId: -1
+                    property int targetUserRole: 0
+
+                    onClosed: membersView.contextMenuTargetId = -1
+
+                    MenuItem {
+                        // visible for REGULAR target → assign; MODERATOR target → unassign
+                        visible: userContextMenu.targetUserRole <= 1
+                        height: visible ? implicitHeight : 0
+                        text: userContextMenu.targetUserRole === 0 ? "Assign Moderator"
+                                                                   : "Unassign Moderator"
+                        onTriggered: {
+                            var newRole = userContextMenu.targetUserRole === 0 ? 1 : 0
+                            appController.assignRole(userContextMenu.targetUserId, newRole)
+                        }
+                    }
+                    MenuItem {
+                        visible: appController.currentUserRoomRole >= 2
+                        height: visible ? implicitHeight : 0
+                        text: "Transfer Ownership"
+                        onTriggered: transferOwnershipDialog.open()
                     }
                 }
             }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  TRANSFER OWNERSHIP CONFIRM DIALOG
+    // ═══════════════════════════════════════════════════════
+    Dialog {
+        id: transferOwnershipDialog
+        title: "Transfer Ownership"
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        width: 320
+
+        onAccepted: appController.assignRole(userContextMenu.targetUserId, 2)
+
+        Text {
+            width: parent.width
+            wrapMode: Text.Wrap
+            text: "Are you sure? You will become a moderator and cannot undo this."
+            font.pixelSize: 13
+            color: AppPalette.textPrimary
         }
     }
 
