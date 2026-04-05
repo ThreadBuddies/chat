@@ -49,13 +49,13 @@ if(NOT APPLE)
     add_custom_command(
         TARGET wx_client_app POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
-                "${CMAKE_CURRENT_SOURCE_DIR}/fonts"
+                "${CMAKE_CURRENT_SOURCE_DIR}/../fonts"
                 "$<TARGET_FILE_DIR:wx_client_app>/fonts"
         COMMENT "Copying fonts for local execution..."
     )
 endif()
 
-file(GLOB FONT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/fonts/*.ttf")
+file(GLOB FONT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../fonts/*.ttf")
 
 # --- Application Installation and Bundling ---
 
@@ -93,7 +93,7 @@ else()
     install(TARGETS wx_client_app DESTINATION . COMPONENT wx_client)
     # ...and then install the fonts directory alongside it.
     install(
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/fonts/"
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../fonts/"
         DESTINATION "fonts"
         COMPONENT wx_client
     )

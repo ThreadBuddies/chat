@@ -58,6 +58,18 @@ target_link_libraries(qt_client_app PRIVATE
         Qt6::WebSockets
 )
 
+file(GLOB FONT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../fonts/*.ttf")
+
+if(NOT APPLE)
+    add_custom_command(
+        TARGET qt_client_app POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/../fonts"
+                "$<TARGET_FILE_DIR:qt_client_app>/fonts"
+        COMMENT "Copying fonts for local execution..."
+    )
+endif()
+
 if(WIN32)
     # Find windeployqt
     get_target_property(QT_QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
@@ -75,6 +87,12 @@ if(WIN32)
         COMPONENT qt_client
     )
 
+    install(
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../fonts/"
+        DESTINATION "fonts"
+        COMPONENT qt_client
+    )
+
     install(CODE "
         execute_process(
             COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" 
@@ -85,6 +103,12 @@ if(WIN32)
     " COMPONENT qt_client)
 
 elseif(APPLE)
+    # Bundle fonts into Contents/Resources/fonts/ inside the .app
+    target_sources(qt_client_app PRIVATE ${FONT_FILES})
+    set_source_files_properties(${FONT_FILES}
+        PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/fonts"
+    )
+
     # This creates the .app structure and automatically includes the
     # resources
     set_target_properties(qt_client_app PROPERTIES
@@ -125,6 +149,12 @@ else() # LINUX
     install(
         TARGETS qt_client_app
         DESTINATION .
+        COMPONENT qt_client
+    )
+
+    install(
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../fonts/"
+        DESTINATION "fonts"
         COMPONENT qt_client
     )
 
