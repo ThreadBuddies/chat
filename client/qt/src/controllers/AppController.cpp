@@ -5,8 +5,13 @@
 #include <models/RoomListModel.h>
 #include <models/MessageListModel.h>
 #include <common/utils/passwordUtil.h>
+#include <common/utils/limits.h>
 #include <utils/TextUtil.h>
 #include <QtConcurrent>
+#include <QGuiApplication>
+#include <QClipboard>
+#include <QFontDatabase>
+#include <QStringList>
 
 namespace {
     constexpr int LOCAL_TYPING_DEBOUNCE_MS   = 2000;
@@ -566,9 +571,33 @@ void AppController::createRoom(const QString& name) {
 }
 
 void AppController::sendMessage(const QString& text) {
-    if (text.trimmed().isEmpty())
-        return;
-    m_ws->sendMessage(text);
+    QString validated = TextUtil::validateMessage(text);
+    if (validated.isNull()) return;
+    m_ws->sendMessage(validated);
+}
+
+QString AppController::truncateMessage(const QString& text) const {
+    // Walk the UTF-16 string counting code points (handle surrogate pairs).
+    const int maxCodePoints = static_cast<int>(common::limits::MAX_MESSAGE_LENGTH);
+    int count = 0;
+    int i = 0;
+    while (i < text.size() && count < maxCodePoints) {
+        if (text[i].isHighSurrogate() && i + 1 < text.size() && text[i + 1].isLowSurrogate())
+            i += 2;
+        else
+            i += 1;
+        ++count;
+    }
+    return text.left(i);
+}
+
+void AppController::requestDeleteMessage(int messageId) {
+    if (!m_currentRoom) return;
+    m_ws->sendDeleteMessage(static_cast<int32_t>(messageId));
+}
+
+void AppController::copyToClipboard(const QString& text) const {
+    QGuiApplication::clipboard()->setText(text);
 }
 
 void AppController::loadOlderMessages() {

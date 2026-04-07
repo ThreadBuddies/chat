@@ -44,6 +44,7 @@ public:
     void sendGetMySalt();
     void sendChangePassword(std::string oldHash, std::string newHash, std::string newSalt);
     void sendAssignRole(int32_t roomId, int32_t userId, chat::UserRights role);
+    void sendDeleteMessage(int32_t messageId);
 
 signals:
     // Connection lifecycle

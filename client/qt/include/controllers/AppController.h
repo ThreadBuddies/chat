@@ -90,6 +90,9 @@ public:
     Q_INVOKABLE void changeUsername(const QString& newUsername);
     Q_INVOKABLE void changePassword(const QString& oldPassword, const QString& newPassword);
     Q_INVOKABLE void assignRole(int userId, int newRole);
+    Q_INVOKABLE QString truncateMessage(const QString& text) const;
+    Q_INVOKABLE void requestDeleteMessage(int messageId);
+    Q_INVOKABLE void copyToClipboard(const QString& text) const;
 
 signals:
     void currentPageChanged();

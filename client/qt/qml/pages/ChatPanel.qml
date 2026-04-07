@@ -387,6 +387,8 @@ Item {
                         verticalLayoutDirection: ListView.BottomToTop
                         spacing: 2
 
+                        property int contextMenuTargetId: -1
+
                         ScrollBar.vertical: AppScrollBar {
                             anchors.right: parent.right
                             anchors.top: parent.top
@@ -400,7 +402,9 @@ Item {
 
                             Rectangle {
                                 anchors.fill: parent
-                                color: index % 2 === 0 ? AppPalette.bgBase : AppPalette.bgSurface
+                                color: model.messageId === messageView.contextMenuTargetId
+                                       ? AppPalette.bgSelected
+                                       : (index % 2 === 0 ? AppPalette.bgBase : AppPalette.bgSurface)
                             }
 
                             ColumnLayout {
@@ -417,6 +421,7 @@ Item {
 
                                     Text {
                                         text: model.username
+                                        textFormat: Text.PlainText
                                         font.pixelSize: 13
                                         font.weight: Font.DemiBold
                                         color: userColor(model.username)
@@ -424,6 +429,7 @@ Item {
                                     Item { Layout.fillWidth: true }
                                     Text {
                                         text: model.formattedTime
+                                        textFormat: Text.PlainText
                                         font.pixelSize: 10
                                         color: AppPalette.textMuted
                                     }
@@ -431,11 +437,23 @@ Item {
 
                                 Text {
                                     text: model.messageText
-                                    wrapMode: Text.Wrap
+                                    textFormat: Text.PlainText
+                                    wrapMode: Text.WrapAnywhere
                                     Layout.fillWidth: true
                                     font.pixelSize: 14
                                     color: AppPalette.textPrimary
                                     lineHeight: 1.4
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.RightButton
+                                onClicked: function(mouse) {
+                                    messageView.contextMenuTargetId = model.messageId
+                                    msgContextMenu.targetMessageId = model.messageId
+                                    msgContextMenu.targetMessageText = model.messageText
+                                    msgContextMenu.popup()
                                 }
                             }
                         }
@@ -545,6 +563,14 @@ Item {
                             placeholderText: "Type a message..."
 
                             onTextChanged: {
+                                Qt.callLater(function() {
+                                    var t = appController.truncateMessage(msgInput.text)
+                                    if (t !== msgInput.text) {
+                                        var pos = msgInput.cursorPosition
+                                        msgInput.text = t
+                                        msgInput.cursorPosition = Math.min(pos, msgInput.text.length)
+                                    }
+                                })
                                 if (text.length > 0)
                                     appController.startTyping()
                             }
@@ -560,6 +586,21 @@ Item {
                             Keys.onEscapePressed: {
                                 appController.stopTyping()
                                 clear()
+                            }
+
+                            Keys.onPressed: function(event) {
+                                if (event.modifiers & Qt.ControlModifier) {
+                                    if (event.key === Qt.Key_C) {
+                                        copy()
+                                        event.accepted = true
+                                    } else if (event.key === Qt.Key_V) {
+                                        paste()
+                                        event.accepted = true
+                                    } else if (event.key === Qt.Key_X) {
+                                        cut()
+                                        event.accepted = true
+                                    }
+                                }
                             }
                         }
 
@@ -711,6 +752,47 @@ Item {
             width: parent.width
             wrapMode: Text.Wrap
             text: "Are you sure? You will become a moderator and cannot undo this."
+            font.pixelSize: 13
+            color: AppPalette.textPrimary
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  MESSAGE CONTEXT MENU
+    // ═══════════════════════════════════════════════════════
+    Menu {
+        id: msgContextMenu
+        property int targetMessageId: -1
+        property string targetMessageText: ""
+
+        onClosed: messageView.contextMenuTargetId = -1
+
+        MenuItem {
+            text: "Copy"
+            onTriggered: appController.copyToClipboard(msgContextMenu.targetMessageText)
+        }
+        MenuItem {
+            visible: appController.currentUserRoomRole > 0
+            height: visible ? implicitHeight : 0
+            text: "Delete"
+            onTriggered: deleteConfirmDialog.open()
+        }
+    }
+
+    Dialog {
+        id: deleteConfirmDialog
+        title: "Delete Message"
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.Yes | Dialog.No
+        width: 300
+
+        onAccepted: appController.requestDeleteMessage(msgContextMenu.targetMessageId)
+
+        Text {
+            width: parent.width
+            wrapMode: Text.Wrap
+            text: "Are you sure you want to delete this message?"
             font.pixelSize: 13
             color: AppPalette.textPrimary
         }
