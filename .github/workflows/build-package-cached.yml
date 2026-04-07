@@ -97,6 +97,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@refs/pull/1000/head
           version: '6.11.0'
           arch: ${{ runner.os == 'Windows' && 'win64_msvc2022_64' || '' }}
           modules: "qtgrpc qtwebsockets qtscxml"
