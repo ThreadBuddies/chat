@@ -64,7 +64,7 @@ RUN pip3 install --break-system-packages pipx \
     && pipx ensurepath
 
 # Set Qt version
-ARG QT_VERSION=6.10.0
+ARG QT_VERSION=6.11.0
 ARG QT_ARCH=gcc_64
 
 # Install Qt
