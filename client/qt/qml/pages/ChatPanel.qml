@@ -589,19 +589,21 @@ Item {
                 // ── Message input ────────────────────────
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 54
+                    implicitHeight: msgInputRow.implicitHeight + 16
                     color: AppPalette.bgSurface
                     border.color: AppPalette.borderColor
                     border.width: 1
 
                     RowLayout {
+                        id: msgInputRow
                         anchors.fill: parent
                         anchors.margins: 8
                         spacing: 8
 
-                        StyledTextField {
+                        StyledTextArea {
                             id: msgInput
                             Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignBottom
                             placeholderText: "Type a message..."
                             unicodeMaxLength: appController.maxMessageLength
 
@@ -618,13 +620,13 @@ Item {
                                 }
                             }
 
-                            Keys.onEscapePressed: {
+                            onEscaped: {
                                 appController.stopTyping()
-                                clear()
                             }
                         }
 
                         StyledButton {
+                            Layout.alignment: Qt.AlignBottom
                             text: "Send"
                             variant: "secondary"
                             enabled: msgInput.text.trim().length > 0
