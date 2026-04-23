@@ -81,6 +81,16 @@ MessageListModel* AppController::messageListModel() const { return m_messageList
 UserListModel* AppController::userListModel() const { return m_userListModel; }
 ConfigService* AppController::configService() const { return m_config; }
 
+int AppController::maxMessageLength() const {
+    return static_cast<int>(common::limits::MAX_MESSAGE_LENGTH);
+}
+int AppController::maxRoomNameLength() const {
+    return static_cast<int>(common::limits::MAX_ROOMNAME_LENGTH);
+}
+int AppController::maxUsernameLength() const {
+    return static_cast<int>(common::limits::MAX_USERNAME_LENGTH);
+}
+
 void AppController::setCurrentPage(Page page) {
     if (m_currentPage != page) {
         m_currentPage = page;
@@ -403,6 +413,8 @@ void AppController::onUserLeft(int32_t userId, const QString& username) {
 
 void AppController::onNewMessage(const MessageData& msg) {
     m_messageListModel->appendMessage(msg);
+    if (m_currentUser && msg.userId == m_currentUser->id)
+        emit jumpToLatestRequested();
 }
 
 void AppController::onMessagesLoaded(const QList<MessageData>& messages) {
@@ -576,19 +588,8 @@ void AppController::sendMessage(const QString& text) {
     m_ws->sendMessage(validated);
 }
 
-QString AppController::truncateMessage(const QString& text) const {
-    // Walk the UTF-16 string counting code points (handle surrogate pairs).
-    const int maxCodePoints = static_cast<int>(common::limits::MAX_MESSAGE_LENGTH);
-    int count = 0;
-    int i = 0;
-    while (i < text.size() && count < maxCodePoints) {
-        if (text[i].isHighSurrogate() && i + 1 < text.size() && text[i + 1].isLowSurrogate())
-            i += 2;
-        else
-            i += 1;
-        ++count;
-    }
-    return text.left(i);
+int AppController::previousGraphemeBoundary(const QString& text, int fromIndex) const {
+    return TextUtil::previousGraphemeBoundary(text, fromIndex);
 }
 
 void AppController::requestDeleteMessage(int messageId) {

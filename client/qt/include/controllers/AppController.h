@@ -45,6 +45,10 @@ public:
     Q_PROPERTY(UserListModel* userListModel READ userListModel CONSTANT)
     Q_PROPERTY(ConfigService* configService READ configService CONSTANT)
 
+    Q_PROPERTY(int maxMessageLength READ maxMessageLength CONSTANT)
+    Q_PROPERTY(int maxRoomNameLength READ maxRoomNameLength CONSTANT)
+    Q_PROPERTY(int maxUsernameLength READ maxUsernameLength CONSTANT)
+
     explicit AppController(ConfigService* configService,
                            WebSocketService* wsService,
                            QObject* parent = nullptr);
@@ -65,6 +69,10 @@ public:
     MessageListModel* messageListModel() const;
     UserListModel* userListModel() const;
     ConfigService* configService() const;
+
+    int maxMessageLength() const;
+    int maxRoomNameLength() const;
+    int maxUsernameLength() const;
 
     void setCurrentPage(Page page);
 
@@ -90,7 +98,7 @@ public:
     Q_INVOKABLE void changeUsername(const QString& newUsername);
     Q_INVOKABLE void changePassword(const QString& oldPassword, const QString& newPassword);
     Q_INVOKABLE void assignRole(int userId, int newRole);
-    Q_INVOKABLE QString truncateMessage(const QString& text) const;
+    Q_INVOKABLE int previousGraphemeBoundary(const QString& text, int fromIndex) const;
     Q_INVOKABLE void requestDeleteMessage(int messageId);
     Q_INVOKABLE void copyToClipboard(const QString& text) const;
 
@@ -105,6 +113,7 @@ signals:
     void typingUsersChanged();
 
     void currentUserRoomRoleChanged();
+    void jumpToLatestRequested();
     void changeUsernameSucceeded();
     void changeUsernameFailed(const QString& error);
     void changePasswordSucceeded();

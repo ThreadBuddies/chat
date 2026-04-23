@@ -26,6 +26,7 @@ Item {
             id: usernameField
             Layout.fillWidth: true
             placeholderText: "Username"
+            unicodeMaxLength: appController.maxUsernameLength
             onAccepted: passwordField.forceActiveFocus()
         }
 

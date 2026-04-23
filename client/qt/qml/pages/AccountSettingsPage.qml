@@ -192,6 +192,7 @@ Item {
             id: newUsernameField
             Layout.fillWidth: true
             placeholderText: "New username"
+            unicodeMaxLength: appController.maxUsernameLength
             onAccepted: changeUsernameButton.clicked()
         }
 
