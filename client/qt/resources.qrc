@@ -11,5 +11,6 @@
         <file>qml/components/AppPalette.qml</file>
         <file>qml/components/StyledButton.qml</file>
         <file>qml/components/StyledTextField.qml</file>
+        <file>qml/components/StyledTextArea.qml</file>
     </qresource>
 </RCC>

@@ -1,4 +1,5 @@
 AppScrollBar 1.0 AppScrollBar.qml
 StyledButton 1.0 StyledButton.qml
 StyledTextField 1.0 StyledTextField.qml
+StyledTextArea 1.0 StyledTextArea.qml
 singleton AppPalette 1.0 AppPalette.qml

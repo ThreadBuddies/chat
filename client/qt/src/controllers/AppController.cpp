@@ -5,8 +5,13 @@
 #include <models/RoomListModel.h>
 #include <models/MessageListModel.h>
 #include <common/utils/passwordUtil.h>
+#include <common/utils/limits.h>
 #include <utils/TextUtil.h>
 #include <QtConcurrent>
+#include <QGuiApplication>
+#include <QClipboard>
+#include <QFontDatabase>
+#include <QStringList>
 
 namespace {
     constexpr int LOCAL_TYPING_DEBOUNCE_MS   = 2000;
@@ -75,6 +80,16 @@ RoomListModel* AppController::roomListModel() const { return m_roomListModel; }
 MessageListModel* AppController::messageListModel() const { return m_messageListModel; }
 UserListModel* AppController::userListModel() const { return m_userListModel; }
 ConfigService* AppController::configService() const { return m_config; }
+
+int AppController::maxMessageLength() const {
+    return static_cast<int>(common::limits::MAX_MESSAGE_LENGTH);
+}
+int AppController::maxRoomNameLength() const {
+    return static_cast<int>(common::limits::MAX_ROOMNAME_LENGTH);
+}
+int AppController::maxUsernameLength() const {
+    return static_cast<int>(common::limits::MAX_USERNAME_LENGTH);
+}
 
 void AppController::setCurrentPage(Page page) {
     if (m_currentPage != page) {
@@ -398,6 +413,8 @@ void AppController::onUserLeft(int32_t userId, const QString& username) {
 
 void AppController::onNewMessage(const MessageData& msg) {
     m_messageListModel->appendMessage(msg);
+    if (m_currentUser && msg.userId == m_currentUser->id)
+        emit jumpToLatestRequested();
 }
 
 void AppController::onMessagesLoaded(const QList<MessageData>& messages) {
@@ -566,9 +583,22 @@ void AppController::createRoom(const QString& name) {
 }
 
 void AppController::sendMessage(const QString& text) {
-    if (text.trimmed().isEmpty())
-        return;
-    m_ws->sendMessage(text);
+    QString validated = TextUtil::validateMessage(text);
+    if (validated.isNull()) return;
+    m_ws->sendMessage(validated);
+}
+
+int AppController::previousGraphemeBoundary(const QString& text, int fromIndex) const {
+    return TextUtil::previousGraphemeBoundary(text, fromIndex);
+}
+
+void AppController::requestDeleteMessage(int messageId) {
+    if (!m_currentRoom) return;
+    m_ws->sendDeleteMessage(static_cast<int32_t>(messageId));
+}
+
+void AppController::copyToClipboard(const QString& text) const {
+    QGuiApplication::clipboard()->setText(text);
 }
 
 void AppController::loadOlderMessages() {

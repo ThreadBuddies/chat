@@ -336,6 +336,8 @@ Item {
             ColumnLayout {
                 spacing: 0
 
+                onVisibleChanged: if (visible) msgInput.forceActiveFocus()
+
                 // ── Room header ──────────────────────────
                 Rectangle {
                     Layout.fillWidth: true
@@ -387,6 +389,9 @@ Item {
                         verticalLayoutDirection: ListView.BottomToTop
                         spacing: 2
 
+                        property int contextMenuTargetId: -1
+                        property int selectedMessageId: -1
+
                         ScrollBar.vertical: AppScrollBar {
                             anchors.right: parent.right
                             anchors.top: parent.top
@@ -394,13 +399,34 @@ Item {
                             anchors.rightMargin: 2
                         }
 
+                        Connections {
+                            target: appController
+                            function onJumpToLatestRequested() {
+                                if (appController.messageListModel.canLoadNewer)
+                                    appController.jumpToLatest()
+                                else
+                                    messageView.positionViewAtBeginning()
+                            }
+                        }
+
                         delegate: Item {
+                            id: msgDelegate
                             width: messageView.width
                             height: msgCol.implicitHeight + 14
 
+                            property int messageId: model.messageId
+
+                            HoverHandler { id: msgHover }
+
                             Rectangle {
                                 anchors.fill: parent
-                                color: index % 2 === 0 ? AppPalette.bgBase : AppPalette.bgSurface
+                                color: {
+                                    if (msgDelegate.messageId === messageView.contextMenuTargetId)
+                                        return AppPalette.bgSelected
+                                    if (msgHover.hovered)
+                                        return AppPalette.bgHover
+                                    return index % 2 === 0 ? AppPalette.bgBase : AppPalette.bgSurface
+                                }
                             }
 
                             ColumnLayout {
@@ -417,6 +443,7 @@ Item {
 
                                     Text {
                                         text: model.username
+                                        textFormat: Text.PlainText
                                         font.pixelSize: 13
                                         font.weight: Font.DemiBold
                                         color: userColor(model.username)
@@ -424,18 +451,51 @@ Item {
                                     Item { Layout.fillWidth: true }
                                     Text {
                                         text: model.formattedTime
+                                        textFormat: Text.PlainText
                                         font.pixelSize: 10
                                         color: AppPalette.textMuted
                                     }
                                 }
 
-                                Text {
+                                TextEdit {
+                                    id: msgBodyEdit
                                     text: model.messageText
-                                    wrapMode: Text.Wrap
+                                    textFormat: TextEdit.PlainText
+                                    wrapMode: TextEdit.Wrap
+                                    readOnly: true
+                                    selectByMouse: true
+                                    persistentSelection: true
                                     Layout.fillWidth: true
                                     font.pixelSize: 14
                                     color: AppPalette.textPrimary
-                                    lineHeight: 1.4
+                                    selectionColor: AppPalette.accent
+                                    selectedTextColor: AppPalette.bgBase
+
+                                    onSelectedTextChanged: {
+                                        if (selectedText.length > 0)
+                                            messageView.selectedMessageId = msgDelegate.messageId
+                                    }
+
+                                    Connections {
+                                        target: messageView
+                                        function onSelectedMessageIdChanged() {
+                                            if (messageView.selectedMessageId !== msgDelegate.messageId)
+                                                msgBodyEdit.deselect()
+                                        }
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.RightButton
+                                onClicked: function(mouse) {
+                                    var sel = msgBodyEdit.selectedText
+                                    messageView.contextMenuTargetId = msgDelegate.messageId
+                                    msgContextMenu.targetMessageId = msgDelegate.messageId
+                                    msgContextMenu.targetMessageText =
+                                        sel.length > 0 ? sel : model.messageText
+                                    msgContextMenu.popup()
                                 }
                             }
                         }
@@ -529,20 +589,23 @@ Item {
                 // ── Message input ────────────────────────
                 Rectangle {
                     Layout.fillWidth: true
-                    implicitHeight: 54
+                    implicitHeight: msgInputRow.implicitHeight + 16
                     color: AppPalette.bgSurface
                     border.color: AppPalette.borderColor
                     border.width: 1
 
                     RowLayout {
+                        id: msgInputRow
                         anchors.fill: parent
                         anchors.margins: 8
                         spacing: 8
 
-                        StyledTextField {
+                        StyledTextArea {
                             id: msgInput
                             Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignBottom
                             placeholderText: "Type a message..."
+                            unicodeMaxLength: appController.maxMessageLength
 
                             onTextChanged: {
                                 if (text.length > 0)
@@ -557,13 +620,13 @@ Item {
                                 }
                             }
 
-                            Keys.onEscapePressed: {
+                            onEscaped: {
                                 appController.stopTyping()
-                                clear()
                             }
                         }
 
                         StyledButton {
+                            Layout.alignment: Qt.AlignBottom
                             text: "Send"
                             variant: "secondary"
                             enabled: msgInput.text.trim().length > 0
@@ -717,6 +780,52 @@ Item {
     }
 
     // ═══════════════════════════════════════════════════════
+    //  MESSAGE CONTEXT MENU
+    // ═══════════════════════════════════════════════════════
+    Menu {
+        id: msgContextMenu
+        property int targetMessageId: -1
+        property string targetMessageText: ""
+
+        onClosed: messageView.contextMenuTargetId = -1
+
+        MenuItem {
+            text: "Copy"
+            onTriggered: appController.copyToClipboard(msgContextMenu.targetMessageText)
+        }
+        MenuItem {
+            visible: appController.currentUserRoomRole > 0
+            height: visible ? implicitHeight : 0
+            text: "Delete"
+            onTriggered: {
+                deleteConfirmDialog.pendingMessageId = msgContextMenu.targetMessageId
+                deleteConfirmDialog.open()
+            }
+        }
+    }
+
+    Dialog {
+        id: deleteConfirmDialog
+        title: "Delete Message"
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.Yes | Dialog.No
+        width: 300
+
+        property int pendingMessageId: -1
+
+        onAccepted: appController.requestDeleteMessage(pendingMessageId)
+
+        Text {
+            width: parent.width
+            wrapMode: Text.Wrap
+            text: "Are you sure you want to delete this message?"
+            font.pixelSize: 13
+            color: AppPalette.textPrimary
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
     //  CREATE ROOM DIALOG
     // ═══════════════════════════════════════════════════════
     Dialog {
@@ -749,7 +858,7 @@ Item {
                 id: newRoomField
                 Layout.fillWidth: true
                 placeholderText: "e.g. my-room"
-                maximumLength: 64
+                unicodeMaxLength: appController.maxRoomNameLength
                 onAccepted: createRoomDialog.accept()
             }
         }

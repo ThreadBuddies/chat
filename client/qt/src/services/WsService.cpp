@@ -527,4 +527,10 @@ void WebSocketService::sendAssignRole(int32_t roomId, int32_t userId, chat::User
     sendEnvelope(env);
 }
 
+void WebSocketService::sendDeleteMessage(int32_t messageId) {
+    chat::Envelope env;
+    env.mutable_delete_message_request()->set_message_id(messageId);
+    sendEnvelope(env);
+}
+
 } // namespace qt_client

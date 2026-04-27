@@ -1,17 +1,37 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QtQml>
 #include <QQuickStyle>
+#include <QFontDatabase>
+#include <QDir>
 
 #include <controllers/AppController.h>
 #include <services/ConfigService.h>
 #include <services/WsService.h>
+#include <utils/TextUtil.h>
 
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
     QQuickStyle::setStyle("Fusion");
     app.setApplicationName("SlightlyPrettyChat");
     app.setOrganizationName("ThreadBuddies");
+
+#ifdef Q_OS_MACOS
+    // On macOS the executable lives in Contents/MacOS/, fonts in Contents/Resources/fonts/
+    const QString fontDir = app.applicationDirPath() + "/../Resources/fonts";
+#else
+    const QString fontDir = app.applicationDirPath() + "/fonts";
+#endif
+    for (const QString& file : QDir(fontDir).entryList({"*.ttf"}, QDir::Files))
+        QFontDatabase::addApplicationFont(fontDir + "/" + file);
+
+    QFont appFont;
+    appFont.setFamilies({"Roboto", "Noto Color Emoji", "Noto Sans SC"});
+    QGuiApplication::setFont(appFont);
+
+    qmlRegisterType<qt_client::CodePointValidator>("App.Validators", 1, 0,
+                                                   "CodePointValidator");
 
     qt_client::ConfigService configService(app.applicationName());
     qt_client::WebSocketService wsService;
