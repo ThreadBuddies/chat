@@ -775,6 +775,21 @@ void AppController::assignRole(int userId, int newRole) {
     m_ws->sendAssignRole(m_currentRoom->id, userId, static_cast<chat::UserRights>(newRole));
 }
 
+void AppController::renameRoom(int roomId, const QString& newName) {
+    clearError();
+    QString sanitized = TextUtil::sanitizeInput(newName);
+    if (sanitized.isNull()) {
+        setErrorMessage("Room name must consist of at least 1 non-special character");
+        return;
+    }
+    m_ws->sendRenameRoom(static_cast<int32_t>(roomId), sanitized);
+}
+
+void AppController::deleteRoom(int roomId) {
+    clearError();
+    m_ws->sendDeleteRoom(static_cast<int32_t>(roomId));
+}
+
 void AppController::onUserRoleChanged(int32_t userId, chat::UserRights newRole) {
     m_userListModel->updateRole(userId, newRole);
     if (m_currentUser && userId == m_currentUser->id) {

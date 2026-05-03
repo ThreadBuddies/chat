@@ -136,6 +136,8 @@ void WebSocketService::handleMessage(const QByteArray& data) {
         case PC::kUserRoleChanged:         handleUserRoleChanged(env); break;
         case PC::kUserTypingStartResponse: handleUserTypingStartResponse(env); break;
         case PC::kUserTypingStopResponse:  handleUserTypingStopResponse(env); break;
+        case PC::kRenameRoomResponse:      handleRenameRoomResponse(env); break;
+        case PC::kDeleteRoomResponse:      handleDeleteRoomResponse(env); break;
         default: qDebug() << "WebSocketService: unhandled envelope payload"; break;
     }
 }
@@ -404,6 +406,20 @@ void WebSocketService::handleUserRoleChanged(const chat::Envelope& env) {
     emit userRoleChanged(msg.user_id(), msg.new_role());
 }
 
+void WebSocketService::handleRenameRoomResponse(const chat::Envelope& env) {
+    const auto& resp = env.rename_room_response();
+    if (!statusOk(resp.status())) {
+        emit error(statusMsg(resp.status()));
+    }
+}
+
+void WebSocketService::handleDeleteRoomResponse(const chat::Envelope& env) {
+    const auto& resp = env.delete_room_response();
+    if (!statusOk(resp.status())) {
+        emit error(statusMsg(resp.status()));
+    }
+}
+
 // ============ Error handlers ============
 
 void WebSocketService::handleGenericError(const chat::Envelope& env) {
@@ -530,6 +546,20 @@ void WebSocketService::sendAssignRole(int32_t roomId, int32_t userId, chat::User
 void WebSocketService::sendDeleteMessage(int32_t messageId) {
     chat::Envelope env;
     env.mutable_delete_message_request()->set_message_id(messageId);
+    sendEnvelope(env);
+}
+
+void WebSocketService::sendRenameRoom(int32_t roomId, const QString& newName) {
+    chat::Envelope env;
+    auto* req = env.mutable_rename_room_request();
+    req->set_room_id(roomId);
+    req->set_name(newName.toStdString());
+    sendEnvelope(env);
+}
+
+void WebSocketService::sendDeleteRoom(int32_t roomId) {
+    chat::Envelope env;
+    env.mutable_delete_room_request()->set_room_id(roomId);
     sendEnvelope(env);
 }
 

@@ -101,6 +101,8 @@ public:
     Q_INVOKABLE int previousGraphemeBoundary(const QString& text, int fromIndex) const;
     Q_INVOKABLE void requestDeleteMessage(int messageId);
     Q_INVOKABLE void copyToClipboard(const QString& text) const;
+    Q_INVOKABLE void renameRoom(int roomId, const QString& newName);
+    Q_INVOKABLE void deleteRoom(int roomId);
 
 signals:
     void currentPageChanged();

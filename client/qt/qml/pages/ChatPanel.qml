@@ -346,6 +346,15 @@ Item {
                     border.color: AppPalette.borderColor
                     border.width: 1
 
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: 6
+                        radius: 6
+                        color: AppPalette.bgHover
+                        opacity: roomHeaderMa.containsMouse ? 1 : 0
+                        Behavior on opacity { NumberAnimation { duration: 80 } }
+                    }
+
                     RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: 16
@@ -354,6 +363,7 @@ Item {
 
                         Text {
                             text: appController.currentRoomName
+                            elide: Text.ElideRight
                             font.pixelSize: 15
                             font.weight: Font.DemiBold
                             color: AppPalette.textPrimary
@@ -365,14 +375,14 @@ Item {
                             font.pixelSize: 11
                             color: AppPalette.textMuted
                         }
-                        StyledButton {
-                            text: "Members"
-                            variant: "tertiary"
-                            implicitHeight: 28
-                            font.pixelSize: 11
-                            cornerRadius: 6
-                            onClicked: rightSidebar.visible = !rightSidebar.visible
-                        }
+                    }
+
+                    MouseArea {
+                        id: roomHeaderMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: rightSidebar.open = !rightSidebar.open
                     }
                 }
 
@@ -654,12 +664,147 @@ Item {
             color: AppPalette.bgSurface
             border.color: AppPalette.borderColor
             border.width: 1
-            visible: appController.currentRoomId >= 0
+
+            property bool open: true
+            visible: appController.currentRoomId >= 0 && open
+
+            // When sidebar is hidden, force the settings section back to collapsed
+            // so the next reveal always starts collapsed.
+            onOpenChanged: if (!open) roomSettingsSection.expanded = false
+
+            Connections {
+                target: appController
+                function onCurrentRoomIdChanged() {
+                    rightSidebar.open = true
+                    roomSettingsSection.expanded = false
+                }
+            }
 
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 10
                 spacing: 4
+
+                // ── Room settings section (owner only) ──────────
+                ColumnLayout {
+                    id: roomSettingsSection
+                    Layout.fillWidth: true
+                    visible: appController.currentUserRoomRole >= 2
+                    spacing: 6
+
+                    property bool expanded: false
+
+                    Connections {
+                        target: appController
+                        function onCurrentRoomNameChanged() {
+                            roomNameField.text = appController.currentRoomName
+                        }
+                    }
+
+                    // Header (collapsible toggle)
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 24
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 4
+                            color: AppPalette.bgHover
+                            opacity: settingsHeaderMa.containsMouse ? 1 : 0
+                            Behavior on opacity { NumberAnimation { duration: 80 } }
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 4
+                            anchors.rightMargin: 4
+                            spacing: 4
+
+                            Text {
+                                text: roomSettingsSection.expanded ? "▾" : "▸"
+                                font.pixelSize: 10
+                                color: AppPalette.textSecondary
+                                Layout.preferredWidth: 10
+                            }
+                            Text {
+                                text: "Room settings"
+                                font.pixelSize: 11
+                                font.weight: Font.DemiBold
+                                color: AppPalette.textSecondary
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        MouseArea {
+                            id: settingsHeaderMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: roomSettingsSection.expanded = !roomSettingsSection.expanded
+                        }
+                    }
+
+                    // Body
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 4
+                        Layout.rightMargin: 4
+                        visible: roomSettingsSection.expanded
+                        spacing: 6
+
+                        Text {
+                            text: "Name"
+                            font.pixelSize: 10
+                            color: AppPalette.textMuted
+                        }
+                        StyledTextField {
+                            id: roomNameField
+                            Layout.fillWidth: true
+                            unicodeMaxLength: appController.maxRoomNameLength
+                            text: appController.currentRoomName
+                            font.pixelSize: 12
+                            implicitHeight: 28
+                            onAccepted: saveRoomNameBtn.clicked()
+                        }
+                        StyledButton {
+                            id: saveRoomNameBtn
+                            Layout.fillWidth: true
+                            text: "Save"
+                            variant: "secondary"
+                            implicitHeight: 28
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
+                            enabled: roomNameField.text.trim().length > 0
+                                     && roomNameField.text.trim() !== appController.currentRoomName
+                            onClicked: appController.renameRoom(
+                                           appController.currentRoomId,
+                                           roomNameField.text.trim())
+                        }
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.topMargin: 4
+                            height: 1
+                            color: AppPalette.borderColor
+                        }
+                        StyledButton {
+                            Layout.fillWidth: true
+                            text: "Delete room"
+                            variant: "tertiary"
+                            labelColor: AppPalette.colorError
+                            implicitHeight: 28
+                            font.pixelSize: 11
+                            onClicked: deleteRoomConfirmDialog.open()
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 4
+                        Layout.bottomMargin: 2
+                        height: 1
+                        color: AppPalette.borderColor
+                    }
+                }
 
                 ListView {
                     id: membersView
@@ -860,6 +1005,77 @@ Item {
                 placeholderText: "e.g. my-room"
                 unicodeMaxLength: appController.maxRoomNameLength
                 onAccepted: createRoomDialog.accept()
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  DELETE ROOM CONFIRM DIALOG
+    // ═══════════════════════════════════════════════════════
+    Dialog {
+        id: deleteRoomConfirmDialog
+        width: 320
+        anchors.centerIn: parent
+        modal: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            radius: 10
+            color: AppPalette.bgBase
+            border.color: AppPalette.borderColor
+            border.width: 1
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 16
+            width: parent.width
+
+            Text {
+                text: "Delete room"
+                font.pixelSize: 14
+                font.weight: Font.DemiBold
+                color: AppPalette.textPrimary
+                Layout.fillWidth: true
+            }
+            Text {
+                text: "Permanently delete \"" + appController.currentRoomName
+                      + "\"? This cannot be undone."
+                font.pixelSize: 13
+                color: AppPalette.textPrimary
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+                Layout.topMargin: 4
+            }
+
+            RowLayout {
+                spacing: 8
+                Layout.fillWidth: true
+
+                StyledButton {
+                    text: "Cancel"
+                    variant: "tertiary"
+                    Layout.fillWidth: true
+                    implicitHeight: 34
+                    onClicked: deleteRoomConfirmDialog.close()
+                }
+                StyledButton {
+                    text: "Delete"
+                    variant: "primary"
+                    labelColor: AppPalette.bgBase
+                    Layout.fillWidth: true
+                    implicitHeight: 34
+                    font.weight: Font.DemiBold
+                    background: Rectangle {
+                        radius: 8
+                        color: AppPalette.colorError
+                        border.color: AppPalette.colorError
+                        border.width: 0.5
+                    }
+                    onClicked: {
+                        appController.deleteRoom(appController.currentRoomId)
+                        deleteRoomConfirmDialog.close()
+                    }
+                }
             }
         }
     }
